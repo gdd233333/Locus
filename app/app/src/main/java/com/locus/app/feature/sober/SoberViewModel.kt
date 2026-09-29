@@ -1,8 +1,12 @@
 package com.locus.app.feature.sober
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.locus.app.core.data.FakeStreakRepository
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.locus.app.LocusApplication
+import com.locus.app.core.data.StreakRepository
 import com.locus.app.core.model.UrgeEvent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +24,7 @@ data class SoberUiState(
 )
 
 class SoberViewModel(
-    private val repository: FakeStreakRepository = FakeStreakRepository(),
+    private val repository: StreakRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SoberUiState())
@@ -46,6 +50,16 @@ class SoberViewModel(
                     isLoading = false,
                 )
             }.collect { _uiState.value = it }
+        }
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val application =
+                    this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as LocusApplication
+                SoberViewModel(application.container.streakRepository)
+            }
         }
     }
 }

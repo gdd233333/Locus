@@ -1,8 +1,12 @@
 package com.locus.app.feature.inspire
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.locus.app.core.data.FakeActivityRepository
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.locus.app.LocusApplication
+import com.locus.app.core.data.ActivityRepository
 import com.locus.app.core.model.Activity
 import com.locus.app.core.model.ActivityCategory
 import kotlinx.coroutines.delay
@@ -18,7 +22,7 @@ data class InspireUiState(
 )
 
 class InspireViewModel(
-    private val repository: FakeActivityRepository = FakeActivityRepository(),
+    private val repository: ActivityRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(InspireUiState())
@@ -47,6 +51,16 @@ class InspireViewModel(
                 isShuffling = false,
                 isLoading = false,
             )
+        }
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val application =
+                    this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as LocusApplication
+                InspireViewModel(application.container.activityRepository)
+            }
         }
     }
 }

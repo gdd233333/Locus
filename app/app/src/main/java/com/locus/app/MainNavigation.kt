@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -30,8 +31,11 @@ import com.locus.app.designsystem.theme.LocusTheme
 import com.locus.app.designsystem.theme.LocusTypography
 import com.locus.app.designsystem.theme.Stone
 import com.locus.app.feature.inspire.InspireScreen
+import com.locus.app.feature.inspire.InspireViewModel
 import com.locus.app.feature.sober.SoberScreen
+import com.locus.app.feature.sober.SoberViewModel
 import com.locus.app.feature.timelog.TimeLogScreen
+import com.locus.app.feature.timelog.TimeLogViewModel
 
 @Composable
 fun MainNavigation() {
@@ -81,9 +85,9 @@ fun MainNavigation() {
                     fadeOut(tween(250))
                 },
             ) {
-                composable("sober") { SoberScreen() }
-                composable("inspire") { InspireScreen() }
-                composable("timelog") { TimeLogScreen() }
+                composable("sober") { SoberScreen(viewModel = viewModel(factory = SoberViewModel.Factory)) }
+                composable("inspire") { InspireScreen(viewModel = viewModel(factory = InspireViewModel.Factory)) }
+                composable("timelog") { TimeLogScreen(viewModel = viewModel(factory = TimeLogViewModel.Factory)) }
                 composable("review") { PlaceholderScreen("复盘 · 敬请期待") }
             }
         }

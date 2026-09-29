@@ -1,49 +1,45 @@
 # Locus 项目交接文档（给 Zcode）
 
-> 交接时间：2026-09-29。接手前请先读 `docs/00-项目总览.md`（项目宪法），再以本文为准了解当前进度。
+> 更新时间：2026-09-29（第二次交接）。接手前请先读 `docs/00-项目总览.md`（项目宪法），再以本文为准了解当前进度。
 
 ---
 
 ## 一句话状态
 
-**文档与规划阶段已全部完成，Stage 1（环境搭建）已完成，下一步是 Stage 2（设计系统实现）。**
+**Stage 1~5（全部 UI）已完成并人工验收，已做排版修正与「动态眩光」动效改造；Stage 6~9 文档已就绪，下一步是 Stage 6（数据层落地）。**
 
-## 已完成
+## 当前进度
 
-| 事项 | 位置 | 状态 |
+| 阶段 | 状态 | 说明 |
 |------|------|------|
-| 高保真设计稿（3 版本，已锁定版本A「墨石」） | `design/` | ✅ 版本A 已锁定，B/C 仅存档 |
-| 项目总览（愿景、锁定决策、技术栈、路线图） | `docs/00-项目总览.md` | ✅ |
-| 设计系统规范（配色/字阶/间距/圆角/动效/组件） | `docs/01-设计系统-墨石.md` | ✅ 从版本A HTML 提取 |
-| 信息架构（数据模型、屏幕清单、UiState 契约） | `docs/02-信息架构.md` | ✅ |
-| Stage 1~5 开发提示词文档 | `docs/03` ~ `docs/07` | ✅ 每个含自包含可复制提示词 |
-| Android 项目初始化（空壳） | `app/` | ✅ 能编译，已提交 git |
-| git 初始化 | 仓库根 | ✅ 2 个 commit（最新 `bc9ebb0 chore: 添加 .gitignore`） |
+| Stage 1~5 | ✅ 完成并验收 | 三 Tab 齐全，用户已手动测试通过并 commit |
+| UI 修正 + 动效改造 | ✅ 完成 | 大理石静态贴图全部删除，替换为动态眩光；排版问题已修 |
+| **Stage 6 数据层** | ⬅ 下一步 | `docs/08-Stage6-数据层落地.md` |
+| Stage 7 复盘 Tab | 待做（依赖 6） | `docs/09-Stage7-复盘Tab.md` |
+| Stage 8 桌面小组件 | 待做（依赖 6） | `docs/10-Stage8-桌面小组件.md` |
+| Stage 9 通知提醒 | 待做（依赖 6） | `docs/11-Stage9-通知提醒.md` |
 
-## 当前代码实况（注意与文档的差异）
+## 当前代码架构（与 docs/00 有出入，以此为准）
 
-- 项目目前只有**单一 `app` 模块**的空壳：`app/app/src/main/java/com/locus/app/MainActivity.kt` 只显示一个深色背景 + "Locus" 文字。
-- `docs/00` 中规划的 `designsystem/`、`core/`、`feature/` 多模块/包结构**尚未创建**，由 Stage 2 起逐步落地。
-- 构建配置：`Gradle KTS`，`app/settings.gradle.kts` 已配置阿里云镜像优先（国内网络环境，勿删）。
-- 包名 `com.locus.app`，minSdk 26，targetSdk 34。
-- 注意：当前 MainActivity 临时用了 `material3.Text`，Stage 2 实现自定义设计系统后应移除 Material3 依赖。
+- 单模块：`app/app/src/main/java/com/locus/app/`，包结构为 `designsystem/`、`core/`、`feature/`（未拆 Gradle module，够用不拆）
+- 数据层：**目前仍是 Fake Repository**（`core/data/Fake*.kt`），ViewModel 构造参数默认实例直接持有；Stage 6 负责替换
+- `designsystem/component/Aurora.kt` 是动效核心：`AuroraBackground`（全屏动态眩光）、`CardShimmer`（卡片流光）、`bounceClick`（按压回弹）、`rememberAuroraPhase` / `rememberBreathingAlpha`（相位工具）
+- 视觉风格：墨石深色 + 琥珀眩光。所有新 UI 必须：根 Box 铺 `AuroraBackground`、卡片内加 `CardShimmer`、可点元素用 `bounceClick`、颜色只用 `designsystem/theme/` tokens
 
-## 下一步（按此顺序执行）
+## 已修复的排版问题（不要再犯）
 
-1. **Stage 2 — 设计系统实现**：打开 `docs/04-Stage2-设计系统实现.md`，按其中「提示词」部分执行。产出：Compose 主题 + tokens + 基础组件（颜色/字体/间距/圆角/动效以 `docs/01` 为唯一标准）。
-2. **Stage 3~5**（可并行）：`docs/05`（戒断中心）、`docs/06`（灵感行动库）、`docs/07`（时间记录）。每屏先定 `UiState` + 假 Repository，用假数据跑通 UI。
-3. 每个 Stage 完成后验证 `./gradlew assembleDebug` 通过并提交 git。
+- SOS 按钮原来悬浮在距底 100dp 处压内容 → 现在贴底部导航上方 16dp
+- 灵感卡片描述文字原来被 `fillMaxWidth(0.75f)` 砍掉 1/4 宽度 → 已放开
+- 卡片右侧/顶部贴大理石图遮内容 → 已全部替换为卡片内流光
+- 守护页脉动环原来计算了 scale 但没应用 → 已修，并加旋转弧光
 
-## 关键约束（来自 docs/00，勿违背）
+## 工作原则
 
-- Kotlin 唯一语言；Jetpack Compose，**不用 Material3**（自定义设计系统）。
-- 视觉以 `design/版本A - 墨石（深色极简）.html` 为准，数值以 `docs/01` 为准。
-- 约束策略：软提醒 + 数据复盘，不做硬阻断/VPN 拦截。
-- 时间模块是**手动记录**，非计划提醒。
-- 存储：Room + DataStore，全离线。
+- Stage 6~9 的提示词是「需求式」写法：只定契约、规则和验收标准，不直接给代码（后端实现交给执行 Agent 自由发挥）
+- Repository 接口签名是硬契约：Stage 6 替换实现时签名一字不动
+- 每个 Stage 文档末尾都有双份验证清单（牛马一份、你一份）
+- 提示词使用方式不变：整段复制给执行 Agent，失败了把错误原样贴回去
 
-## 工作原则提醒
+## 设计稿参考
 
-- UI 状态契约（`docs/02` 中的 UiState 数据类）就是业务层接口规范——前端约束业务。
-- `designsystem` 不依赖任何 feature 模块，须可独立编译。
-- Stage 文档中的提示词是给执行 Agent 用的，自包含；若需更多上下文，回查 `docs/01` 和 `docs/02`。
+`design/版本A - 墨石（深色极简）.html` 仍是视觉基准，但「大理石纹」的解读已更正为**动态眩光特效**（代码实现在 Aurora.kt），不要再生成或使用静态大理石贴图。

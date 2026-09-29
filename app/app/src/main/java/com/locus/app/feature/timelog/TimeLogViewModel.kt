@@ -1,8 +1,12 @@
 package com.locus.app.feature.timelog
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.locus.app.core.data.FakeTimeLogRepository
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.locus.app.LocusApplication
+import com.locus.app.core.data.TimeLogRepository
 import com.locus.app.core.model.FrequentActivity
 import com.locus.app.core.model.TimeLog
 import kotlinx.coroutines.Job
@@ -25,7 +29,7 @@ data class TimeLogUiState(
 )
 
 class TimeLogViewModel(
-    private val repository: FakeTimeLogRepository = FakeTimeLogRepository(),
+    private val repository: TimeLogRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TimeLogUiState())
@@ -39,8 +43,14 @@ class TimeLogViewModel(
         val monday = today.minusDays((today.dayOfWeek.value - 1).toLong())
         _uiState.value = _uiState.value.copy(
             weekDates = (0..6).map { monday.plusDays(it.toLong()) },
-            suggestedActivities = repository.getFrequentActivities(),
         )
+
+        // 常用活动来自 time_logs 聚合，随记录变化实时刷新
+        viewModelScope.launch {
+            repository.getFrequentActivities().collect { frequent ->
+                _uiState.value = _uiState.value.copy(suggestedActivities = frequent)
+            }
+        }
 
         // 监听进行中的记录：出现时启动秒表，消失时归零
         viewModelScope.launch {
@@ -97,5 +107,15 @@ class TimeLogViewModel(
     fun endLog() {
         val id = _uiState.value.activeLog?.id ?: return
         viewModelScope.launch { repository.endLog(id) }
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val application =
+                    this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as LocusApplication
+                TimeLogViewModel(application.container.timeLogRepository)
+            }
+        }
     }
 }
