@@ -100,5 +100,5 @@
   <line x1="820" y1="371" x2="764" y2="371" class="ln" marker-end="url(#arrow)"/>
   <line x1="820" y1="530" x2="764" y2="530" class="ln" marker-end="url(#arrow)"/>
 
-  <text x="1136" y="700" class="t l dim" text-anchor="end">LOCUS · v1.0.0</text>
+  <text x="1136" y="700" class="t l dim" text-anchor="end">LOCUS · v1.0.1</text>
 </svg>

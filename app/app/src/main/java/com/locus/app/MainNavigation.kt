@@ -3,7 +3,6 @@ package com.locus.app
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
@@ -15,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -64,10 +64,14 @@ fun MainNavigation(
                         // 带可选参数的路由（inspire?category=...）按基础路由匹配选中态
                         selectedRoute = currentRoute.substringBefore("?"),
                         onItemSelected = { item ->
+                            // 已在该 Tab 时不动作（避免无谓的导航状态扰动）
+                            if (currentRoute.substringBefore("?") == item.route) return@LocusBottomNav
                             navController.navigate(item.route) {
-                                popUpTo("sober") { saveState = true }
+                                // 确定性单栈：弹回起始页重压目标 Tab。
+                                // 不用 saveState/restoreState——该模式与裸 navigate
+                                // （SOS 跳灵感页）混用会错位存档槽位，导致 Tab 切换失灵
+                                popUpTo(navController.graph.findStartDestination().id)
                                 launchSingleTop = true
-                                restoreState = true
                             }
                         },
                     )
@@ -77,20 +81,21 @@ fun MainNavigation(
             NavHost(
                 navController = navController,
                 startDestination = "sober",
-                modifier = Modifier.padding(innerPadding),
+                // 顶部不预留：内容（极光背景）延伸到状态栏后面，全屏沉浸；
+                // 文字避让由各屏幕自行 statusBarsPadding。底部照旧避开导航栏。
+                modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding()),
                 enterTransition = {
-                    fadeIn(tween(350, easing = LocusMotion.EaseOut)) +
-                        slideInVertically(tween(350, easing = LocusMotion.EaseOut)) { it / 14 }
+                    // 对称交叉淡入淡出：旧页面全程垫底，不存在透明空窗期（顶部闪黑的根因）
+                    fadeIn(tween(300, easing = LocusMotion.EaseOut))
                 },
                 exitTransition = {
-                    fadeOut(tween(250))
+                    fadeOut(tween(300, easing = LocusMotion.EaseOut))
                 },
                 popEnterTransition = {
-                    fadeIn(tween(350, easing = LocusMotion.EaseOut)) +
-                        slideInVertically(tween(350, easing = LocusMotion.EaseOut)) { it / 14 }
+                    fadeIn(tween(300, easing = LocusMotion.EaseOut))
                 },
                 popExitTransition = {
-                    fadeOut(tween(250))
+                    fadeOut(tween(300, easing = LocusMotion.EaseOut))
                 },
             ) {
                 composable(
@@ -103,7 +108,11 @@ fun MainNavigation(
                             navController.navigate("surfing") { launchSingleTop = true }
                         },
                         onNavigateToInspireEmergency = {
-                            navController.navigate("inspire?category=EMERGENCY") { launchSingleTop = true }
+                            // 与 Tab 导航同一模式：弹回起始页重压，保持单栈不变式
+                            navController.navigate("inspire?category=EMERGENCY") {
+                                popUpTo(navController.graph.findStartDestination().id)
+                                launchSingleTop = true
+                            }
                         },
                     )
                 }

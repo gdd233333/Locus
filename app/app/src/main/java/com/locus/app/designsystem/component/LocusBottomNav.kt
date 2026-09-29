@@ -58,7 +58,7 @@ fun LocusBottomNav(
                 .background(InkBackground.copy(alpha = 0.85f))
                 .navigationBarsPadding()
                 .padding(horizontal = 20.dp)
-                .padding(bottom = 14.dp),
+                .padding(bottom = 8.dp),
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically,
         ) {

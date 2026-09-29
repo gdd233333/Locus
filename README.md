@@ -112,7 +112,10 @@ keyPassword=<your-password>
 
 ## 版本
 
-- **v1.0.0** —— 首个版本（versionCode 1 / versionName 1.0），GitHub Releases 附已签名 APK。
+- **v1.0.1** —— 修复：Tab 导航栈错位导致的切页失灵、弹层残留窗口挡住触摸、状态栏切页闪黑；全屏沉浸改为内容延伸到状态栏后；灵感库 47 条。
+- **v1.0.0** —— 首个版本。
+
+Release 页面附已签名 APK（直接覆盖安装即可升级）。
 
 ## 设计说明
 

@@ -18,7 +18,7 @@ object LocusSpacing {
     val screenHorizontal = 24.dp
     val cardPadding = 24.dp
     val cardSpacing = 16.dp
-    val bottomNavHeight = 84.dp
+    val bottomNavHeight = 64.dp
     val contentBottomPadding = 110.dp
 }
 

@@ -43,11 +43,12 @@ fun InspireScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = LocusSpacing.contentBottomPadding),
         ) {
             // 标题区
-            Column(modifier = Modifier.padding(horizontal = 28.dp).padding(top = 24.dp)) {
+            Column(modifier = Modifier.padding(horizontal = 28.dp).padding(top = 12.dp)) {
                 Text("现在，做点别的", style = LocusTypography.displaySmall, color = Smoke)
                 Spacer(Modifier.height(6.dp))
                 Text("根据当下状态，为你推荐三件事", style = LocusTypography.bodySmall, color = Stone)
