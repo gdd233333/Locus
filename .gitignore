@@ -1,0 +1,16 @@
+# Android
+app/build/
+app/.cxx/
+*.apk
+*.aab
+*.keystore
+local.properties
+
+# IDE
+.idea/
+.gradle/
+*.iml
+
+# OS
+Thumbs.db
+.DS_Store
