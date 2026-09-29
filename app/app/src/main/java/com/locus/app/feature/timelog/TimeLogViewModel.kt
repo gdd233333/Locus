@@ -97,10 +97,10 @@ class TimeLogViewModel(
     fun showStartSheet() { _uiState.value = _uiState.value.copy(showStartSheet = true) }
     fun hideStartSheet() { _uiState.value = _uiState.value.copy(showStartSheet = false) }
 
+    /** 开始记录：弹层由 UI 先 hide 再调用这里，故不再直接关弹层标记 */
     fun startLog(activityName: String) {
         viewModelScope.launch {
             repository.startLog(activityName)
-            hideStartSheet()
         }
     }
 

@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +44,7 @@ import com.locus.app.designsystem.theme.LocusTypography
 import com.locus.app.designsystem.theme.Smoke
 import com.locus.app.designsystem.theme.Stone
 import com.locus.app.designsystem.theme.StoneDark
+import kotlinx.coroutines.launch
 
 /** 打卡弹层：心情 1~5 + 可选备注 → 确认写入 */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,11 +54,25 @@ fun CheckInSheet(
     onConfirm: (mood: Int, note: String?) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
     var mood by remember { mutableStateOf<Int?>(null) }
     var note by remember { mutableStateOf("") }
 
+    /**
+     * 关闭弹层必须"先 hide 动画、再撤组件"：
+     * M3 的 ModalBottomSheet 是独立窗口 + 全屏遮罩，未播完 hide 就直接从组合里移除，
+     * 会留下一个看不见但吃掉全屏触摸的残留窗口（表现为整页点不动）。
+     */
+    fun closeThen(action: () -> Unit = {}) {
+        scope.launch {
+            sheetState.hide()
+            onDismiss()
+            action()
+        }
+    }
+
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { closeThen() },
         sheetState = sheetState,
         containerColor = InkSurface,
     ) {
@@ -143,7 +159,10 @@ fun CheckInSheet(
                     .then(
                         if (enabled) {
                             Modifier.bounceClick {
-                                onConfirm(mood ?: return@bounceClick, note.ifBlank { null })
+                                val chosen = mood
+                                if (chosen != null) {
+                                    closeThen { onConfirm(chosen, note.ifBlank { null }) }
+                                }
                             }
                         } else {
                             Modifier

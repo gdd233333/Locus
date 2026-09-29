@@ -30,6 +30,8 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.locus.app.core.model.UrgeEvent
+import com.locus.app.core.model.UrgeIntensity
 import com.locus.app.designsystem.component.AuroraBackground
 import com.locus.app.designsystem.component.CardShimmer
 import com.locus.app.designsystem.component.LocalReduceMotion
@@ -40,6 +42,9 @@ import com.locus.app.designsystem.component.rememberAuroraPhase
 import com.locus.app.designsystem.theme.*
 import com.locus.app.notification.rememberNotificationPermissionRequester
 import kotlin.math.sin
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun SoberScreen(
@@ -80,7 +85,7 @@ fun SoberScreen(
                         .border(1.dp, Line, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text("K", style = LocusTypography.labelLarge, color = Amber)
+                    Text(uiState.userInitial, style = LocusTypography.labelLarge, color = Amber)
                 }
             }
 
@@ -98,7 +103,8 @@ fun SoberScreen(
             UrgeSurfCard(
                 modifier = Modifier.padding(horizontal = 24.dp),
                 waveData = uiState.urgeWaveData,
-                hintText = "今晚 20:30 出现一次中度冲动，持续约 12 分钟，已通过冲浪练习平复。",
+                title = urgeSurfTitle(uiState.latestUrge),
+                hintText = urgeSurfHint(uiState.latestUrge),
             )
 
             // 快捷操作
@@ -152,22 +158,17 @@ fun SoberScreen(
             )
         }
 
-        // SOS 急救弹层：三个出口都会先记录冲动
+        // SOS 急救弹层：三个出口都会先记录冲动（弹层自身负责先 hide 再关闭）
         if (uiState.showEmergencySheet) {
             UrgeEmergencySheet(
                 onDismiss = viewModel::hideEmergencySheet,
-                onRecordOnly = { intensity ->
-                    viewModel.logUrge(intensity)
-                    viewModel.hideEmergencySheet()
-                },
+                onRecordOnly = { intensity -> viewModel.logUrge(intensity) },
                 onStartSurfing = { intensity ->
                     viewModel.logUrge(intensity)
-                    viewModel.hideEmergencySheet()
                     onNavigateToSurfing()
                 },
                 onFindActivity = { intensity ->
                     viewModel.logUrge(intensity)
-                    viewModel.hideEmergencySheet()
                     onNavigateToInspireEmergency()
                 },
             )
@@ -370,6 +371,7 @@ private fun OrbitArcs(diameterDp: Int) {
 @Composable
 private fun UrgeSurfCard(
     waveData: List<Float>,
+    title: String,
     hintText: String,
     modifier: Modifier = Modifier,
 ) {
@@ -393,7 +395,7 @@ private fun UrgeSurfCard(
         Column(modifier = Modifier.padding(24.dp)) {
             Text("URGE SURFING · 冲动冲浪", style = LocusTypography.labelMedium, color = Stone)
             Spacer(Modifier.height(4.dp))
-            Text("冲动峰值已过", style = LocusTypography.headlineMedium, color = Smoke)
+            Text(title, style = LocusTypography.headlineMedium, color = Smoke)
             Spacer(Modifier.height(16.dp))
 
             Canvas(modifier = Modifier.fillMaxWidth().height(64.dp)) {
@@ -455,6 +457,40 @@ private fun UrgeSurfCard(
             Text(hintText, style = LocusTypography.bodySmall, color = Stone)
         }
     }
+}
+
+/** 冲动卡片标题：跟随最近一次冲动的状态（不再写死） */
+private fun urgeSurfTitle(urge: UrgeEvent?): String = when {
+    urge == null -> "还没有冲动记录"
+    urge.resolved -> "冲动峰值已过"
+    else -> "冲动还没过去"
+}
+
+/** 冲动卡片提示：由最近一次冲动的真实数据（时间 / 强度 / 时长 / 平复方式）拼出 */
+private fun urgeSurfHint(urge: UrgeEvent?): String {
+    if (urge == null) return "真来了就按下面的急救按钮：记录下来，或者冲浪十分钟。"
+
+    val zone = ZoneId.systemDefault()
+    val date = urge.timestamp.atZone(zone).toLocalDate()
+    val today = LocalDate.now(zone)
+    val day = when (date) {
+        today -> "今天"
+        today.minusDays(1) -> "昨天"
+        else -> "${date.monthValue}.${date.dayOfMonth}"
+    }
+    val time = urge.timestamp.atZone(zone).format(DateTimeFormatter.ofPattern("HH:mm"))
+    val intensity = when (urge.intensity) {
+        UrgeIntensity.MILD -> "轻度"
+        UrgeIntensity.MODERATE -> "中度"
+        UrgeIntensity.STRONG -> "强烈"
+    }
+    val duration = urge.durationMinutes?.let { "持续约 $it 分钟，" }.orEmpty()
+    val ending = if (urge.resolved) {
+        "已通过${urge.resolutionMethod ?: "冲浪练习"}平复。"
+    } else {
+        "还没标记平复。"
+    }
+    return "最近一次：$day $time ${intensity}冲动，$duration$ending"
 }
 
 /** 快捷操作卡片：图标 + 标题 + 副标题，按压回弹 + 流光 */

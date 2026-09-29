@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.locus.app.LocusApplication
 import com.locus.app.core.data.StreakRepository
+import com.locus.app.core.data.settings.SettingsRepository
 import com.locus.app.core.model.UrgeEvent
 import com.locus.app.core.model.UrgeIntensity
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +23,7 @@ data class SoberUiState(
     val urgeWaveData: List<Float> = emptyList(),
     val todayCheckedIn: Boolean = false,
     val isLoading: Boolean = true,
+    val userInitial: String = "K",
     val showCheckInSheet: Boolean = false,
     val showEmergencySheet: Boolean = false,
     /** 打卡成功的时间戳：变化一次播放一次粒子庆祝 */
@@ -30,6 +32,7 @@ data class SoberUiState(
 
 class SoberViewModel(
     private val repository: StreakRepository,
+    private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SoberUiState())
@@ -55,12 +58,20 @@ class SoberViewModel(
                     isLoading = false,
                 )
             }.collect { newState ->
-                // 数据字段来自 Flow，纯 UI 状态（弹层/庆祝）保留当前值，避免被覆盖
+                // 数据字段来自 Flow，纯 UI 状态（弹层/庆祝/头像字母）保留当前值，避免被覆盖
                 _uiState.value = newState.copy(
                     showCheckInSheet = _uiState.value.showCheckInSheet,
                     showEmergencySheet = _uiState.value.showEmergencySheet,
                     celebrationTrigger = _uiState.value.celebrationTrigger,
+                    userInitial = _uiState.value.userInitial,
                 )
+            }
+        }
+
+        // 头像字母来自设置（DataStore），默认 "K"
+        viewModelScope.launch {
+            settingsRepository.userInitial.collect { name ->
+                _uiState.value = _uiState.value.copy(userInitial = name)
             }
         }
     }
@@ -73,12 +84,11 @@ class SoberViewModel(
 
     fun hideEmergencySheet() { _uiState.value = _uiState.value.copy(showEmergencySheet = false) }
 
-    /** 打卡：写入后关弹层并触发庆祝粒子 */
+    /** 打卡：写入后触发庆祝粒子（弹层由 sheet 自己先 hide 再回调关闭） */
     fun checkIn(mood: Int, note: String?) {
         viewModelScope.launch {
             repository.checkIn(mood, note)
             _uiState.value = _uiState.value.copy(
-                showCheckInSheet = false,
                 celebrationTrigger = System.currentTimeMillis(),
             )
         }
@@ -94,7 +104,10 @@ class SoberViewModel(
             initializer {
                 val application =
                     this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as LocusApplication
-                SoberViewModel(application.container.streakRepository)
+                SoberViewModel(
+                    repository = application.container.streakRepository,
+                    settingsRepository = application.container.settingsRepository,
+                )
             }
         }
     }

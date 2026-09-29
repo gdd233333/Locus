@@ -46,6 +46,16 @@ fun ActivityEntity.toModel(): Activity = Activity(
     isBuiltIn = isBuiltIn,
 )
 
+fun Activity.toEntity(): ActivityEntity = ActivityEntity(
+    id = id,
+    title = title,
+    description = description,
+    durationMinutes = durationMinutes,
+    category = category,
+    tags = tags,
+    isBuiltIn = isBuiltIn,
+)
+
 fun TimeLogEntity.toModel(): TimeLog = TimeLog(
     id = id,
     activityName = activityName,

@@ -1,4 +1,13 @@
-# Locus
+<p align="center">
+  <img src="docs/assets/banner.svg" alt="Locus — 自律 · 冲动管理 · 全离线" width="100%"/>
+</p>
+
+<p align="center">
+  <img src="docs/assets/badge-platform.svg" alt="Android · minSdk 26" height="28"/>
+  <img src="docs/assets/badge-stack.svg" alt="Kotlin · Compose · Room · Glance" height="28"/>
+  <img src="docs/assets/badge-offline.svg" alt="100% Offline" height="28"/>
+  <img src="docs/assets/badge-version.svg" alt="v1.0.0" height="28"/>
+</p>
 
 自律 / 冲动管理 Android App。深色「墨石 Inkstone」设计系统，**全离线**：不联网、无账号、无推送，所有数据留在本机。
 
@@ -48,6 +57,14 @@
 | 后台 | WorkManager（小组件 15 分钟兜底 + 记录中分钟级自续期 tick、晚间提醒 24h 周期）、Glance 1.2 小组件 |
 | DI | 手动 `AppContainer`（无 Hilt） |
 | 其他 | KSP、navigation-compose（deep link `locus://sober`、`locus://timelog`）、minSdk 26 / targetSdk 37 |
+
+## 架构
+
+<p align="center">
+  <img src="docs/assets/architecture.svg" alt="Locus 架构总览" width="100%"/>
+</p>
+
+分层原则：UI 只依赖 ViewModel，ViewModel 只依赖 Repository 接口（Room 与 Fake 双实现，接口即业务契约）；小组件与通知同样经由 Repository 读写，不绕过数据层。
 
 ## 目录结构
 

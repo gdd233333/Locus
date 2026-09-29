@@ -1,3 +1,17 @@
-<resources>
-    <style name="Theme.Locus" parent="android:Theme.Material.NoActionBar" />
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!--
+        深色沉浸式主题：
+        windowBackground 必须是墨色，否则页面切换过渡的一瞬间会露出系统窗口背景（纯黑）——
+        表现为状态栏（顶部通知区）闪一下黑。
+    -->
+    <style name="Theme.Locus" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/locus_ink</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <!-- 关闭系统给系统栏加的半透明对比遮罩（深色底上会显出一条灰/黑带） -->
+        <item name="android:enforceStatusBarContrast" tools:targetApi="q">false</item>
+        <item name="android:enforceNavigationBarContrast" tools:targetApi="q">false</item>
+    </style>
 </resources>

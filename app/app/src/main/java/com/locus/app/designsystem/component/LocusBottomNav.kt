@@ -56,6 +56,7 @@ fun LocusBottomNav(
                 .fillMaxWidth()
                 .height(LocusSpacing.bottomNavHeight)
                 .background(InkBackground.copy(alpha = 0.85f))
+                .navigationBarsPadding()
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 14.dp),
             horizontalArrangement = Arrangement.SpaceAround,

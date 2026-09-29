@@ -5,6 +5,10 @@ import com.locus.app.notification.NotificationChannels
 import com.locus.app.notification.NotificationSync
 import com.locus.app.widget.WidgetRefresh
 import com.locus.app.widget.WidgetSync
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class LocusApplication : Application() {
 
@@ -12,6 +16,10 @@ class LocusApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // 内置活动差量补插（老库升级后补上新活动）
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            runCatching { container.seedActivitiesIfNeeded() }
+        }
         // 通知：渠道注册 + 晚间提醒调度 + 记录中常驻通知
         NotificationChannels.create(this)
         NotificationSync.start(this)

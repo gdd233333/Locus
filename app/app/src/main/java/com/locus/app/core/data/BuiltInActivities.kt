@@ -6,6 +6,12 @@ import com.locus.app.core.model.ActivityCategory
 /** 内置活动清单：Room 预置数据与 Fake 仓库共用的唯一来源 */
 object BuiltInActivities {
 
+    /**
+     * 预置数据版本：每次向 ALL 追加活动时 +1。
+     * 老用户升级后由 AppContainer.seedActivitiesIfNeeded() 按版本号补插差量。
+     */
+    const val SEED_VERSION = 2
+
     val ALL: List<Activity> = listOf(
         Activity(1, "冷水洗脸 + 深呼吸", "物理打断当前状态，让大脑从冲动中抽离。冷水刺激迷走神经，快速降低唤醒水平。", 5, ActivityCategory.EMERGENCY, listOf("冲动急救")),
         Activity(2, "做 20 个俯卧撑", "立刻，就在原地。心率上来，冲动下去。身体是最诚实的开关。", 5, ActivityCategory.EMERGENCY, listOf("冲动急救")),
@@ -27,5 +33,34 @@ object BuiltInActivities {
         Activity(18, "下楼买一瓶水", "就走出去，哪怕只是为了买水。", 15, ActivityCategory.OUTDOOR, listOf("户外")),
         Activity(19, "整理手机相册", "删截图，删废片，留下真正想留的。", 20, ActivityCategory.ENVIRONMENT, listOf("环境整理")),
         Activity(20, "做一道简单的菜", "煎蛋、煮面都行，重点是从头到尾做完。", 40, ActivityCategory.CREATIVE, listOf("创作")),
+
+        // ---- v2 追加：补齐「30 分钟」类目，并让 8 个类目都有充足可选项 ----
+        Activity(21, "去咖啡馆坐一会儿", "带上一本书或一副耳机，换个地方待半小时。", 30, ActivityCategory.MEDIUM, listOf("出门")),
+        Activity(22, "整理一个抽屉", "只挑一个，倒出来，擦干净，再放回去。", 30, ActivityCategory.MEDIUM, listOf("环境整理")),
+        Activity(23, "写一封不寄出的信", "写给那个人，或者写给三个月后的自己。", 30, ActivityCategory.MEDIUM, listOf("表达")),
+        Activity(24, "看一集纪录片", "自然、历史、美食都行，看完记一句感想。", 30, ActivityCategory.MEDIUM, listOf("输入")),
+        Activity(25, "跟着视频练一段", "拉伸、瑜伽、八段锦，选一个跟着做。", 30, ActivityCategory.MEDIUM, listOf("身体")),
+        Activity(26, "喝一大杯水", "慢慢喝完，顺便看看窗外。", 5, ActivityCategory.QUICK, listOf("身体")),
+        Activity(27, "深呼吸二十次", "吸气四秒，呼气六秒，数完为止。", 5, ActivityCategory.QUICK, listOf("冥想")),
+        Activity(28, "把桌面清空", "只留正在用的东西，其余归位。", 5, ActivityCategory.QUICK, listOf("环境整理")),
+        Activity(29, "洗把脸整理一下", "凉水拍脸，把头发理顺，人是会清醒的。", 5, ActivityCategory.QUICK, listOf("感官唤醒")),
+        Activity(30, "开合跳 30 秒 × 3 组", "心跳上来，冲动就下去了。", 5, ActivityCategory.EMERGENCY, listOf("冲动急救")),
+        Activity(31, "给最信任的人发条消息", "不用解释什么，聊两句就行。", 5, ActivityCategory.EMERGENCY, listOf("表达")),
+        Activity(32, "冲个热水澡", "让水声盖过脑子里的声音。", 15, ActivityCategory.EMERGENCY, listOf("身体")),
+        Activity(33, "去便利店买瓶饮料", "目的地不重要，出门才重要。", 10, ActivityCategory.OUTDOOR, listOf("户外")),
+        Activity(34, "去天台或阳台吹风", "站着就好，看远处，别带手机。", 10, ActivityCategory.OUTDOOR, listOf("户外")),
+        Activity(35, "绕小区走两圈", "按自己的节奏，不赶时间。", 30, ActivityCategory.OUTDOOR, listOf("户外")),
+        Activity(36, "抄一首喜欢的歌词", "手写，慢一点，字丑也无所谓。", 15, ActivityCategory.CREATIVE, listOf("创作")),
+        Activity(37, "拍五张照片", "同一件事的五个角度，回头拼成一张。", 20, ActivityCategory.CREATIVE, listOf("创作")),
+        Activity(38, "手冲一杯咖啡", "磨豆、注水、等它滴完，全过程别刷手机。", 20, ActivityCategory.CREATIVE, listOf("创作")),
+        Activity(39, "听一集播客", "边走边听也行，坐下听也行。", 40, ActivityCategory.INPUT, listOf("输入")),
+        Activity(40, "读十页纸质书", "读不进去就换一本，别硬扛。", 20, ActivityCategory.INPUT, listOf("输入")),
+        Activity(41, "背十个单词", "不用多，今天记住十个就够了。", 15, ActivityCategory.INPUT, listOf("输入")),
+        Activity(42, "换一次床单", "换完躺上去的那一下，值回票价。", 20, ActivityCategory.ENVIRONMENT, listOf("环境整理")),
+        Activity(43, "给植物浇水", "顺便把枯叶摘掉。", 10, ActivityCategory.ENVIRONMENT, listOf("环境整理")),
+        Activity(44, "清空手机一个屏", "把不常用的 App 收进文件夹或删掉。", 15, ActivityCategory.ENVIRONMENT, listOf("环境整理")),
+        Activity(45, "录一段语音日记", "对着手机说两分钟，不用回听。", 10, ActivityCategory.EXPRESSION, listOf("表达")),
+        Activity(46, "发一条动态", "记录今天的一件小事，公开或仅自己可见都行。", 10, ActivityCategory.EXPRESSION, listOf("表达")),
+        Activity(47, "给朋友写张明信片", "不用寄出去，写完拍张照发给他也行。", 15, ActivityCategory.EXPRESSION, listOf("表达")),
     )
 }

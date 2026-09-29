@@ -55,9 +55,9 @@ fun InspireScreen(
 
             Spacer(Modifier.height(20.dp))
 
-            // 筛选 chips：第一个是"此刻推荐"（即不过滤）
+            // 筛选 chips：第一个是"此刻推荐"（即不过滤），8 个类目全部可筛
             val chips = listOf(ChipItem("all", "此刻推荐")) +
-                ActivityCategory.entries.take(5).map { ChipItem(it.name, it.displayName) }
+                ActivityCategory.entries.map { ChipItem(it.name, it.displayName) }
             FilterChipRow(
                 chips = chips,
                 selectedChipId = uiState.selectedCategory?.name ?: "all",

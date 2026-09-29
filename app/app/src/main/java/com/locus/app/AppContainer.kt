@@ -2,14 +2,17 @@ package com.locus.app
 
 import android.content.Context
 import com.locus.app.core.data.ActivityRepository
+import com.locus.app.core.data.BuiltInActivities
 import com.locus.app.core.data.StreakRepository
 import com.locus.app.core.data.TimeLogRepository
 import com.locus.app.core.data.local.LocusDatabase
+import com.locus.app.core.data.local.toEntity
 import com.locus.app.core.data.room.RoomActivityRepository
 import com.locus.app.core.data.room.RoomStreakRepository
 import com.locus.app.core.data.room.RoomTimeLogRepository
 import com.locus.app.core.data.settings.SettingsRepository
 import com.locus.app.core.data.settings.settingsDataStore
+import kotlinx.coroutines.flow.first
 
 /** 手动依赖注入容器：数据库与各 Repository 单例懒加载 */
 class AppContainer(context: Context) {
@@ -34,5 +37,24 @@ class AppContainer(context: Context) {
 
     val timeLogRepository: TimeLogRepository by lazy {
         RoomTimeLogRepository(database.timeLogDao())
+    }
+
+    /**
+     * 内置活动差量补插：按 SettingsRepository.seedVersion 与 BuiltInActivities.SEED_VERSION 比对，
+     * 老用户升级后把新增活动补进库（按标题去重，幂等）。
+     */
+    suspend fun seedActivitiesIfNeeded() {
+        val stored = settingsRepository.seedVersion.first()
+        if (stored >= BuiltInActivities.SEED_VERSION) return
+
+        val dao = database.activityDao()
+        val existingTitles = dao.getAllTitles().toSet()
+        val missing = BuiltInActivities.ALL
+            .filterNot { it.title in existingTitles }
+            .map { it.toEntity() }
+        if (missing.isNotEmpty()) {
+            dao.insertAll(missing)
+        }
+        settingsRepository.setSeedVersion(BuiltInActivities.SEED_VERSION)
     }
 }

@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +46,7 @@ import com.locus.app.designsystem.theme.LocusTypography
 import com.locus.app.designsystem.theme.Smoke
 import com.locus.app.designsystem.theme.Stone
 import com.locus.app.designsystem.theme.StoneDark
+import kotlinx.coroutines.launch
 
 /** SOS 急救弹层：强度三档 + 三个出口，未选强度时出口全部禁用 */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,10 +58,20 @@ fun UrgeEmergencySheet(
     onFindActivity: (UrgeIntensity) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
     var intensity by remember { mutableStateOf<UrgeIntensity?>(null) }
 
+    /** 先播 hide 动画再撤组件，避免留下吃掉全屏触摸的残留弹层窗口 */
+    fun closeThen(action: () -> Unit = {}) {
+        scope.launch {
+            sheetState.hide()
+            onDismiss()
+            action()
+        }
+    }
+
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { closeThen() },
         sheetState = sheetState,
         containerColor = InkSurface,
     ) {
@@ -110,21 +122,21 @@ fun UrgeEmergencySheet(
                 title = "我只是记录一下",
                 subtitle = "记下来，我自己扛",
                 enabled = chosen != null,
-            ) { chosen?.let(onRecordOnly) }
+            ) { chosen?.let { level -> closeThen { onRecordOnly(level) } } }
             Spacer(Modifier.height(12.dp))
             ExitOption(
                 icon = Icons.Filled.Waves,
                 title = "我要做冲浪练习",
                 subtitle = "10 分钟引导呼吸",
                 enabled = chosen != null,
-            ) { chosen?.let(onStartSurfing) }
+            ) { chosen?.let { level -> closeThen { onStartSurfing(level) } } }
             Spacer(Modifier.height(12.dp))
             ExitOption(
                 icon = Icons.Filled.Star,
                 title = "给我找点事做",
                 subtitle = "推荐替代活动",
                 enabled = chosen != null,
-            ) { chosen?.let(onFindActivity) }
+            ) { chosen?.let { level -> closeThen { onFindActivity(level) } } }
         }
     }
 }

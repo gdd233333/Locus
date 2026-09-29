@@ -1,6 +1,7 @@
 package com.locus.app.core.data.local.dao
 
 import androidx.room.Dao
+import androidx.room.Insert
 import androidx.room.Query
 import com.locus.app.core.data.local.entity.ActivityEntity
 import kotlinx.coroutines.flow.Flow
@@ -16,4 +17,10 @@ interface ActivityDao {
 
     @Query("SELECT COUNT(*) FROM activities")
     suspend fun count(): Int
+
+    @Query("SELECT title FROM activities")
+    suspend fun getAllTitles(): List<String>
+
+    @Insert
+    suspend fun insertAll(items: List<ActivityEntity>)
 }

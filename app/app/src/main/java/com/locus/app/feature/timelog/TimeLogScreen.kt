@@ -40,6 +40,7 @@ import com.locus.app.designsystem.component.rememberBreathingAlpha
 import com.locus.app.designsystem.theme.*
 import com.locus.app.notification.rememberNotificationPermissionRequester
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -178,14 +179,30 @@ fun TimeLogScreen(
 
         // 开始记录底部弹层
         if (uiState.showStartSheet) {
+            val sheetScope = rememberCoroutineScope()
+            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+            // 先播 hide 动画再撤组件：直接移除会留下吃掉全屏触摸的残留弹层窗口
+            fun closeStartSheet() {
+                sheetScope.launch {
+                    sheetState.hide()
+                    viewModel.hideStartSheet()
+                }
+            }
+
             ModalBottomSheet(
-                onDismissRequest = viewModel::hideStartSheet,
-                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                onDismissRequest = { closeStartSheet() },
+                sheetState = sheetState,
                 containerColor = InkSurface,
             ) {
                 StartLogSheet(
                     suggestions = uiState.suggestedActivities,
-                    onConfirm = viewModel::startLog,
+                    onConfirm = { name ->
+                        sheetScope.launch {
+                            sheetState.hide()
+                            viewModel.hideStartSheet()
+                            viewModel.startLog(name)
+                        }
+                    },
                 )
             }
         }
