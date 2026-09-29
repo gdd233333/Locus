@@ -17,6 +17,9 @@ interface CheckInDao {
     @Query("SELECT * FROM daily_check_ins WHERE date = :date LIMIT 1")
     suspend fun getOn(date: LocalDate): DailyCheckInEntity?
 
+    @Query("SELECT date FROM daily_check_ins WHERE date >= :from AND date <= :to ORDER BY date ASC")
+    fun observeDatesBetween(from: LocalDate, to: LocalDate): Flow<List<LocalDate>>
+
     @Insert
     suspend fun insert(checkIn: DailyCheckInEntity): Long
 

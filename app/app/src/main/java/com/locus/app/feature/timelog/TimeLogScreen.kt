@@ -31,11 +31,14 @@ import com.locus.app.core.model.FrequentActivity
 import com.locus.app.core.model.TimeLog
 import com.locus.app.designsystem.component.AuroraBackground
 import com.locus.app.designsystem.component.CardShimmer
+import com.locus.app.designsystem.component.LocalReduceMotion
+import com.locus.app.designsystem.component.LocusRhythm
 import com.locus.app.designsystem.component.WeekDaySelector
 import com.locus.app.designsystem.component.bounceClick
 import com.locus.app.designsystem.component.rememberAuroraPhase
 import com.locus.app.designsystem.component.rememberBreathingAlpha
 import com.locus.app.designsystem.theme.*
+import com.locus.app.notification.rememberNotificationPermissionRequester
 import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.time.ZoneId
@@ -72,9 +75,11 @@ fun TimeLogScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isToday = uiState.selectedDate == LocalDate.now()
+    // 通知权限在用户第一次点「开始记录」时再申请
+    val requestNotificationPermission = rememberNotificationPermissionRequester()
 
     Box(modifier = modifier.fillMaxSize().background(InkBackground)) {
-        AuroraBackground(modifier = Modifier.fillMaxSize(), intensity = 0.6f)
+        AuroraBackground(modifier = Modifier.fillMaxSize(), intensity = 0.7f)
 
         Column(
             modifier = Modifier
@@ -138,7 +143,10 @@ fun TimeLogScreen(
                     )
                 } else {
                     IdleCard(
-                        onStartClick = viewModel::showStartSheet,
+                        onStartClick = {
+                            requestNotificationPermission()
+                            viewModel.showStartSheet()
+                        },
                         modifier = Modifier.padding(horizontal = 24.dp),
                     )
                 }
@@ -195,23 +203,24 @@ private fun RecordingCard(
     onEndClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // 边框虚线流动：相位持续推进，虚线沿边框爬行
-    val borderPhase = rememberAuroraPhase(6000, label = "recordingBorder") * 30f
-    // 边框整体呼吸
-    val borderAlpha = rememberBreathingAlpha(0.25f, 0.55f, 4000, label = "borderBreathe")
-    // 圆点脉动：缩放 1f ~ 1.8f（2s 周期）
+    // 边框虚线流动：相位持续推进，虚线沿边框爬行（8s 潮汐节拍）
+    val borderPhase = rememberAuroraPhase(LocusRhythm.GLOW, label = "recordingBorder") * 30f
+    // 边框整体呼吸（4s）
+    val borderAlpha = rememberBreathingAlpha(0.25f, 0.55f, LocusRhythm.BREATH, label = "borderBreathe")
+    // 圆点脉动：缩放 1f ~ 1.8f（减弱动态时静止）
+    val reduceMotion = LocalReduceMotion.current
     val transition = rememberInfiniteTransition(label = "recordingDot")
     val dotScale by transition.animateFloat(
         initialValue = 1f,
-        targetValue = 1.8f,
+        targetValue = if (reduceMotion) 1f else 1.8f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutSlowInEasing),
+            animation = tween(LocusRhythm.BREATH / 2, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse,
         ),
         label = "dotScale",
     )
-    // 计时器光晕呼吸
-    val glowAlpha = rememberBreathingAlpha(0.25f, 0.55f, 2600, label = "timerGlow")
+    // 计时器光晕呼吸（4s）
+    val glowAlpha = rememberBreathingAlpha(0.25f, 0.55f, LocusRhythm.BREATH, label = "timerGlow")
     // 入场
     var appeared by remember { mutableStateOf(false) }
     val enterAlpha by animateFloatAsState(if (appeared) 1f else 0f, tween(700, easing = LocusMotion.EaseOut), label = "enterAlpha")
@@ -303,8 +312,8 @@ private fun IdleCard(
     onStartClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // 虚线缓慢爬行，呼应 RecordingCard 的流动边框
-    val dashPhase = rememberAuroraPhase(10000, label = "idleDash") * 22f
+    // 虚线缓慢爬行，呼应 RecordingCard 的流动边框（16s 潮汐节拍）
+    val dashPhase = rememberAuroraPhase(LocusRhythm.SHIMMER, label = "idleDash") * 22f
 
     Box(
         modifier = modifier

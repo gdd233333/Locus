@@ -80,4 +80,16 @@ class FakeTimeLogRepository : TimeLogRepository {
             .take(6)
             .map { FrequentActivity(it.key, it.value) }
     }
+
+    override fun getDailyDurations(from: LocalDate, to: LocalDate): Flow<List<Pair<LocalDate, Long>>> =
+        logs.map { list ->
+            val byDay = list
+                .filter { !it.date.isBefore(from) && !it.date.isAfter(to) }
+                .groupBy { it.date }
+                .mapValues { (_, dayLogs) -> dayLogs.sumOf { it.durationSeconds() } }
+            generateSequence(from) { it.plusDays(1) }
+                .takeWhile { !it.isAfter(to) }
+                .map { date -> date to (byDay[date] ?: 0L) }
+                .toList()
+        }
 }

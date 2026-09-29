@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Waves
 import androidx.compose.material3.Icon
@@ -31,17 +32,25 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.locus.app.designsystem.component.AuroraBackground
 import com.locus.app.designsystem.component.CardShimmer
+import com.locus.app.designsystem.component.LocalReduceMotion
+import com.locus.app.designsystem.component.LocusRhythm
 import com.locus.app.designsystem.component.SosButton
 import com.locus.app.designsystem.component.bounceClick
 import com.locus.app.designsystem.component.rememberAuroraPhase
 import com.locus.app.designsystem.theme.*
+import com.locus.app.notification.rememberNotificationPermissionRequester
+import kotlin.math.sin
 
 @Composable
 fun SoberScreen(
     viewModel: SoberViewModel = viewModel(),
+    onNavigateToSurfing: () -> Unit = {},
+    onNavigateToInspireEmergency: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    // 通知权限在用户第一次点「打卡守护」时再申请
+    val requestNotificationPermission = rememberNotificationPermissionRequester()
 
     Box(modifier = modifier.fillMaxSize().background(InkBackground)) {
         // 动态眩光背景：替代原静态大理石贴图
@@ -75,10 +84,11 @@ fun SoberScreen(
                 }
             }
 
-            // Streak Hero：大数字 + 脉动环 + 旋转弧光 + 背后光晕
+            // Streak Hero：大数字 + 脉动环 + 旋转弧光 + 背后光晕 + 打卡庆祝粒子
             StreakHero(
                 days = uiState.currentStreakDays,
                 isPersonalBest = uiState.isPersonalBest,
+                celebrationTrigger = uiState.celebrationTrigger,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 40.dp),
@@ -100,40 +110,82 @@ fun SoberScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 QuickActionCard(
-                    title = "打卡守护",
-                    subtitle = "记录今夜状态",
-                    icon = { Icon(Icons.Filled.Shield, null, tint = Amber, modifier = Modifier.size(18.dp)) },
+                    title = if (uiState.todayCheckedIn) "今日已守护" else "打卡守护",
+                    subtitle = if (uiState.todayCheckedIn) "已经打过卡了" else "记录今夜状态",
+                    icon = {
+                        Icon(
+                            imageVector = if (uiState.todayCheckedIn) Icons.Filled.Check else Icons.Filled.Shield,
+                            contentDescription = null,
+                            tint = Amber,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
                     modifier = Modifier.weight(1f),
-                ) { /* Stage 后续接打卡流程 */ }
+                ) {
+                    if (!uiState.todayCheckedIn) {
+                        requestNotificationPermission()
+                        viewModel.showCheckInSheet()
+                    }
+                }
                 QuickActionCard(
                     title = "冲浪练习",
                     subtitle = "10分钟冥想",
                     icon = { Icon(Icons.Filled.Waves, null, tint = Amber, modifier = Modifier.size(18.dp)) },
                     modifier = Modifier.weight(1f),
-                ) { /* Stage 后续接练习页 */ }
+                ) { onNavigateToSurfing() }
             }
         }
 
         // SOS 按钮：悬浮于底部导航上方一点，不压内容（内容区底部已留 110dp）
         SosButton(
-            onClick = { /* Stage 后续接急救弹层 */ },
+            onClick = viewModel::showEmergencySheet,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 16.dp),
         )
+
+        // 打卡弹层
+        if (uiState.showCheckInSheet) {
+            CheckInSheet(
+                onDismiss = viewModel::hideCheckInSheet,
+                onConfirm = { mood, note -> viewModel.checkIn(mood, note) },
+            )
+        }
+
+        // SOS 急救弹层：三个出口都会先记录冲动
+        if (uiState.showEmergencySheet) {
+            UrgeEmergencySheet(
+                onDismiss = viewModel::hideEmergencySheet,
+                onRecordOnly = { intensity ->
+                    viewModel.logUrge(intensity)
+                    viewModel.hideEmergencySheet()
+                },
+                onStartSurfing = { intensity ->
+                    viewModel.logUrge(intensity)
+                    viewModel.hideEmergencySheet()
+                    onNavigateToSurfing()
+                },
+                onFindActivity = { intensity ->
+                    viewModel.logUrge(intensity)
+                    viewModel.hideEmergencySheet()
+                    onNavigateToInspireEmergency()
+                },
+            )
+        }
     }
 }
 
-/** Streak Hero：中心大数字 + 三层脉动环 + 双旋转弧光 + 呼吸光晕 */
+/** Streak Hero：中心大数字 + 三层脉动环 + 双旋转弧光 + 呼吸光晕 + 庆祝粒子 */
 @Composable
 private fun StreakHero(
     days: Int,
     isPersonalBest: Boolean,
+    celebrationTrigger: Long,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        // 数字背后的呼吸光晕
-        val haloPhase = rememberAuroraPhase(6000, label = "heroHalo")
+        // 数字背后的呼吸光晕（8s，潮汐节拍）
+        val haloPhase = rememberAuroraPhase(LocusRhythm.GLOW, label = "heroHalo")
         Canvas(modifier = Modifier.size(240.dp)) {
             val breathe = (kotlin.math.sin(haloPhase) + 1f) / 2f
             drawCircle(
@@ -178,23 +230,76 @@ private fun StreakHero(
                 color = Stone,
             )
         }
+
+        // 打卡庆祝：一圈琥珀粒子从中心飞散渐隐（每次打卡触发一次）
+        CelebrationBurst(trigger = celebrationTrigger)
     }
 }
 
-/** 脉动环：scale 1.0→1.08 涟漪扩散，alpha 渐隐 */
+private class BurstParticle(val angle: Float, val speed: Float, val radius: Float)
+
+/** 庆祝粒子：20~30 个小圆点从中心向外飞散渐隐，约 800ms 一次性 */
+@Composable
+private fun CelebrationBurst(trigger: Long) {
+    if (trigger <= 0L) return
+    val progress = remember { Animatable(1f) }
+    val particles = remember(trigger) {
+        val random = kotlin.random.Random(trigger)
+        List(26) {
+            BurstParticle(
+                angle = random.nextFloat() * (Math.PI * 2).toFloat(),
+                speed = 0.55f + random.nextFloat() * 0.65f,
+                radius = (3f + random.nextFloat() * 5f) * 3.5f,
+            )
+        }
+    }
+
+    LaunchedEffect(trigger) {
+        progress.snapTo(0f)
+        progress.animateTo(1f, tween(800, easing = LocusMotion.EaseOut))
+    }
+
+    Canvas(modifier = Modifier.size(240.dp)) {
+        val p = progress.value
+        if (p >= 1f) return@Canvas
+        val maxDistance = size.minDimension / 2 * 0.92f
+        particles.forEach { particle ->
+            val distance = maxDistance * particle.speed * p
+            drawCircle(
+                color = Amber.copy(alpha = (1f - p) * 0.9f),
+                radius = particle.radius * (1f - p * 0.35f),
+                center = Offset(
+                    x = center.x + kotlin.math.cos(particle.angle) * distance,
+                    y = center.y + sin(particle.angle) * distance,
+                ),
+            )
+        }
+    }
+}
+
+/** 脉动环：scale 涟漪扩散 + alpha 渐隐（4s 潮汐节拍；减弱动态时为静态环） */
 @Composable
 private fun PulseRing(diameterDp: Int, delayMillis: Int) {
+    if (LocalReduceMotion.current) {
+        Box(
+            modifier = Modifier
+                .size(diameterDp.dp)
+                .alpha(0.25f)
+                .border(1.dp, Amber, CircleShape),
+        )
+        return
+    }
     val transition = rememberInfiniteTransition(label = "pulse")
     val scale by transition.animateFloat(
         initialValue = 0.92f, targetValue = 1.08f,
         animationSpec = infiniteRepeatable(
-            tween(2600, delayMillis, EaseInOutSine), RepeatMode.Reverse
+            tween(LocusRhythm.BREATH, delayMillis, EaseInOutSine), RepeatMode.Reverse
         ), label = "pulseScale",
     )
     val alpha by transition.animateFloat(
         initialValue = 0.55f, targetValue = 0.12f,
         animationSpec = infiniteRepeatable(
-            tween(2600, delayMillis, EaseInOutSine), RepeatMode.Reverse
+            tween(LocusRhythm.BREATH, delayMillis, EaseInOutSine), RepeatMode.Reverse
         ), label = "pulseAlpha",
     )
     Box(
@@ -209,10 +314,10 @@ private fun PulseRing(diameterDp: Int, delayMillis: Int) {
     )
 }
 
-/** 双旋转弧光：一对圆弧沿圆周三轨反向旋转，营造"环绕守护"感 */
+/** 双旋转弧光：三条圆弧沿圆周反向旋转（32s 潮汐节拍，减弱动态时静止） */
 @Composable
 private fun OrbitArcs(diameterDp: Int) {
-    val phase = rememberAuroraPhase(11000, label = "orbitArcs")
+    val phase = rememberAuroraPhase(LocusRhythm.AMBIENT, label = "orbitArcs")
     Canvas(modifier = Modifier.size(diameterDp.dp)) {
         val strokeWidth = 1.5.dp.toPx()
         val inset = strokeWidth

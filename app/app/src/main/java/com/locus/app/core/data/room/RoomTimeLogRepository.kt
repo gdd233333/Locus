@@ -53,6 +53,16 @@ class RoomTimeLogRepository(
             rows.map { FrequentActivity(it.name, it.useCount) }
         }
 
+    override fun getDailyDurations(from: LocalDate, to: LocalDate): Flow<List<Pair<LocalDate, Long>>> =
+        timeLogDao.observeDailyDurations(from, to).map { rows ->
+            val secondsByDay = rows.associate { it.date to it.totalMillis / 1000 }
+            // 补齐区间内每一天，无记录的日子为 0（柱状图底槽依赖完整序列）
+            generateSequence(from) { it.plusDays(1) }
+                .takeWhile { !it.isAfter(to) }
+                .map { date -> date to (secondsByDay[date] ?: 0L) }
+                .toList()
+        }
+
     private companion object {
         const val FREQUENT_LIMIT = 6
     }

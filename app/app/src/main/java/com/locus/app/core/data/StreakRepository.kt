@@ -4,6 +4,8 @@ import com.locus.app.core.model.DailyCheckIn
 import com.locus.app.core.model.UrgeEvent
 import com.locus.app.core.model.UrgeIntensity
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
+import java.time.YearMonth
 
 interface StreakRepository {
 
@@ -28,4 +30,13 @@ interface StreakRepository {
 
     /** 标记最近一条未平复的冲动为已平复 */
     suspend fun resolveLatestUrge(durationMinutes: Int, method: String)
+
+    /** 日期区间内每天冲动次数（按本地日期分桶，缺数据补 0），复盘曲线用 */
+    fun getDailyUrgeCounts(from: LocalDate, to: LocalDate): Flow<List<Pair<LocalDate, Int>>>
+
+    /** 日期区间内成功平复的冲动次数 */
+    fun getResolvedUrgeCount(from: LocalDate, to: LocalDate): Flow<Int>
+
+    /** 指定月份内所有打卡日期，复盘日历用 */
+    fun getCheckInDatesInMonth(month: YearMonth): Flow<Set<LocalDate>>
 }

@@ -73,19 +73,23 @@ fun LocusBottomNav(
                     animationSpec = tween(400, easing = LocusMotion.Spring),
                     label = "navDot"
                 )
-                // 选中时图标弹跳放大
+                // 选中时弹跳放大；取消选中时平滑回落（不弹跳，避免断裂感）
                 val iconScale by animateFloatAsState(
                     targetValue = if (isSelected) 1.15f else 1f,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMedium,
-                    ),
+                    animationSpec = if (isSelected) {
+                        spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium,
+                        )
+                    } else {
+                        tween(250, easing = LocusMotion.EaseOut)
+                    },
                     label = "navIconScale"
                 )
-                // 图标背后的选中光晕
+                // 图标背后的选中光晕（始终渲染，用 alpha 控制，避免淡出不彻底的跳变）
                 val glowAlpha by animateFloatAsState(
                     targetValue = if (isSelected) 1f else 0f,
-                    animationSpec = tween(400),
+                    animationSpec = tween(300),
                     label = "navGlow"
                 )
 
@@ -100,15 +104,13 @@ fun LocusBottomNav(
                         .padding(vertical = 4.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        if (glowAlpha > 0f) {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .alpha(glowAlpha)
-                                    .clip(CircleShape)
-                                    .background(AmberDim)
-                            )
-                        }
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .alpha(glowAlpha)
+                                .clip(CircleShape)
+                                .background(AmberDim)
+                        )
                         Icon(
                             imageVector = item.icon,
                             contentDescription = item.label,

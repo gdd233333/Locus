@@ -1,3 +1,20 @@
 <resources>
     <string name="app_name">Locus</string>
+    <string name="streak_widget_label">守护天数</string>
+    <string name="streak_widget_description">连续守护天数，点一下直接打卡</string>
+    <string name="recording_widget_label">正在记录</string>
+    <string name="recording_widget_description">进行中的时间记录与计时，点一下结束</string>
+
+    <!-- 通知 -->
+    <string name="channel_reminder_name">晚间守护提醒</string>
+    <string name="channel_reminder_desc">每晚提醒你为今天打卡</string>
+    <string name="channel_ongoing_name">记录中</string>
+    <string name="channel_ongoing_desc">时间记录进行中的常驻通知</string>
+    <string name="channel_sos_name">急救入口</string>
+    <string name="channel_sos_desc">随时可用的冲动急救入口，安静不打扰</string>
+    <string name="notif_reminder_title">守住今夜</string>
+    <string name="notif_reminder_text">今天还没有打卡，点一下就好</string>
+    <string name="notif_action_check_in">直接打卡</string>
+    <string name="notif_action_end">结束记录</string>
+    <string name="notif_ongoing_started_at">%1$s 开始</string>
 </resources>

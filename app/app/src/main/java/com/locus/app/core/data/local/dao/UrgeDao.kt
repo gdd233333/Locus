@@ -20,6 +20,9 @@ interface UrgeDao {
     @Query("SELECT * FROM urge_events WHERE resolved = 0 ORDER BY timestamp DESC, id DESC LIMIT 1")
     suspend fun getLatestUnresolved(): UrgeEventEntity?
 
+    @Query("SELECT COUNT(*) FROM urge_events WHERE timestamp >= :start AND timestamp < :end AND resolved = 1")
+    fun observeResolvedCountBetween(start: Instant, end: Instant): Flow<Int>
+
     @Insert
     suspend fun insert(event: UrgeEventEntity): Long
 

@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.locus.app.LocusApplication
 import com.locus.app.core.data.StreakRepository
 import com.locus.app.core.model.UrgeEvent
+import com.locus.app.core.model.UrgeIntensity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -21,6 +22,10 @@ data class SoberUiState(
     val urgeWaveData: List<Float> = emptyList(),
     val todayCheckedIn: Boolean = false,
     val isLoading: Boolean = true,
+    val showCheckInSheet: Boolean = false,
+    val showEmergencySheet: Boolean = false,
+    /** 打卡成功的时间戳：变化一次播放一次粒子庆祝 */
+    val celebrationTrigger: Long = 0L,
 )
 
 class SoberViewModel(
@@ -49,8 +54,39 @@ class SoberViewModel(
                     todayCheckedIn = values[5] != null,
                     isLoading = false,
                 )
-            }.collect { _uiState.value = it }
+            }.collect { newState ->
+                // 数据字段来自 Flow，纯 UI 状态（弹层/庆祝）保留当前值，避免被覆盖
+                _uiState.value = newState.copy(
+                    showCheckInSheet = _uiState.value.showCheckInSheet,
+                    showEmergencySheet = _uiState.value.showEmergencySheet,
+                    celebrationTrigger = _uiState.value.celebrationTrigger,
+                )
+            }
         }
+    }
+
+    fun showCheckInSheet() { _uiState.value = _uiState.value.copy(showCheckInSheet = true) }
+
+    fun hideCheckInSheet() { _uiState.value = _uiState.value.copy(showCheckInSheet = false) }
+
+    fun showEmergencySheet() { _uiState.value = _uiState.value.copy(showEmergencySheet = true) }
+
+    fun hideEmergencySheet() { _uiState.value = _uiState.value.copy(showEmergencySheet = false) }
+
+    /** 打卡：写入后关弹层并触发庆祝粒子 */
+    fun checkIn(mood: Int, note: String?) {
+        viewModelScope.launch {
+            repository.checkIn(mood, note)
+            _uiState.value = _uiState.value.copy(
+                showCheckInSheet = false,
+                celebrationTrigger = System.currentTimeMillis(),
+            )
+        }
+    }
+
+    /** 记录一次冲动（SOS 弹层三个出口共用） */
+    fun logUrge(intensity: UrgeIntensity) {
+        viewModelScope.launch { repository.logUrge(intensity) }
     }
 
     companion object {

@@ -2,6 +2,7 @@ package com.locus.app.feature.inspire
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -23,9 +24,10 @@ data class InspireUiState(
 
 class InspireViewModel(
     private val repository: ActivityRepository,
+    initialCategory: ActivityCategory? = null,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(InspireUiState())
+    private val _uiState = MutableStateFlow(InspireUiState(selectedCategory = initialCategory))
     val uiState: StateFlow<InspireUiState> = _uiState
 
     init {
@@ -55,11 +57,15 @@ class InspireViewModel(
     }
 
     companion object {
+        /** 路由支持 "inspire?category=EMERGENCY" 预选分类；不带参数时行为不变 */
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application =
                     this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as LocusApplication
-                InspireViewModel(application.container.activityRepository)
+                val initialCategory = createSavedStateHandle()
+                    .get<String>("category")
+                    ?.let { name -> runCatching { ActivityCategory.valueOf(name) }.getOrNull() }
+                InspireViewModel(application.container.activityRepository, initialCategory)
             }
         }
     }

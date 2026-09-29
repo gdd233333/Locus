@@ -4,6 +4,8 @@ app/.cxx/
 *.apk
 *.aab
 *.keystore
+*.jks
+keystore.properties
 local.properties
 
 # IDE

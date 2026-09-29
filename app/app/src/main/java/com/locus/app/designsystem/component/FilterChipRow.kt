@@ -1,5 +1,8 @@
 package com.locus.app.designsystem.component
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -10,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.locus.app.designsystem.theme.*
@@ -34,25 +38,41 @@ fun FilterChipRow(
     ) {
         chips.forEach { chip ->
             val isSelected = chip.id == selectedChipId
+            // 选中态全动画过渡：底色 / 文字色 / 描边 / 琥珀光晕
+            val bgColor by animateColorAsState(
+                targetValue = if (isSelected) Amber else InkSurface,
+                animationSpec = tween(300), label = "chipBg",
+            )
+            val textColor by animateColorAsState(
+                targetValue = if (isSelected) InkBackground else Stone,
+                animationSpec = tween(300), label = "chipText",
+            )
+            val borderColor by animateColorAsState(
+                targetValue = if (isSelected) Amber.copy(alpha = 0.45f) else Line,
+                animationSpec = tween(300), label = "chipBorder",
+            )
+            val glowElevation by animateDpAsState(
+                targetValue = if (isSelected) 8.dp else 0.dp,
+                animationSpec = tween(300), label = "chipGlow",
+            )
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(LocusRadius.full))
-                    .then(
-                        if (isSelected) {
-                            Modifier.background(Amber)
-                        } else {
-                            Modifier
-                                .background(InkSurface)
-                                .border(1.dp, Line, RoundedCornerShape(LocusRadius.full))
-                        }
+                    .shadow(
+                        elevation = glowElevation,
+                        shape = RoundedCornerShape(LocusRadius.full),
+                        ambientColor = Amber,
+                        spotColor = Amber,
                     )
+                    .clip(RoundedCornerShape(LocusRadius.full))
+                    .background(bgColor)
+                    .border(1.dp, borderColor, RoundedCornerShape(LocusRadius.full))
                     .bounceClick(scaleDown = 0.92f) { onChipSelected(chip) }
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Text(
                     text = chip.label,
                     style = LocusTypography.labelMedium,
-                    color = if (isSelected) InkBackground else Stone,
+                    color = textColor,
                 )
             }
         }

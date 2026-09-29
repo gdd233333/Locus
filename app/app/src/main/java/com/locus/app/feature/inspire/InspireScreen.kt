@@ -38,7 +38,7 @@ fun InspireScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     Box(modifier = modifier.fillMaxSize().background(InkBackground)) {
-        AuroraBackground(modifier = Modifier.fillMaxSize(), intensity = 0.7f)
+        AuroraBackground(modifier = Modifier.fillMaxSize(), intensity = 0.8f)
 
         Column(
             modifier = Modifier

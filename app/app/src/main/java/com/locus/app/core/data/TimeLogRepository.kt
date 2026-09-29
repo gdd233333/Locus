@@ -19,4 +19,7 @@ interface TimeLogRepository {
 
     /** 常用活动：由 time_logs 按 activity_name 聚合，COUNT 降序取前 N 条 */
     fun getFrequentActivities(): Flow<List<FrequentActivity>>
+
+    /** 日期区间内每天的总时长（秒，进行中记录按当前时刻结算），复盘柱状图用 */
+    fun getDailyDurations(from: LocalDate, to: LocalDate): Flow<List<Pair<LocalDate, Long>>>
 }

@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import java.time.Instant
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
@@ -80,4 +81,26 @@ class FakeStreakRepository : StreakRepository {
             resolutionMethod = method,
         )
     }
+
+    override fun getDailyUrgeCounts(from: LocalDate, to: LocalDate): Flow<List<Pair<LocalDate, Int>>> = flowOf(
+        generateSequence(from) { it.plusDays(1) }
+            .takeWhile { !it.isAfter(to) }
+            .map { date ->
+                date to urgeEvents.count {
+                    it.timestamp.atZone(ZoneId.systemDefault()).toLocalDate() == date
+                }
+            }
+            .toList()
+    )
+
+    override fun getResolvedUrgeCount(from: LocalDate, to: LocalDate): Flow<Int> = flowOf(
+        urgeEvents.count { event ->
+            val date = event.timestamp.atZone(ZoneId.systemDefault()).toLocalDate()
+            event.resolved && !date.isBefore(from) && !date.isAfter(to)
+        }
+    )
+
+    override fun getCheckInDatesInMonth(month: YearMonth): Flow<Set<LocalDate>> = flowOf(
+        setOfNotNull(checkIn?.date?.takeIf { YearMonth.from(it) == month })
+    )
 }

@@ -8,6 +8,12 @@ import com.locus.app.core.data.local.entity.TimeLogEntity
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
+/** time_logs 聚合投影：每日总时长（毫秒），进行中的记录按查询时刻结算 */
+data class DailyDurationRow(
+    val date: LocalDate,
+    val totalMillis: Long,
+)
+
 /** time_logs 聚合投影：常用活动（非独立表） */
 data class FrequentActivityRow(
     val name: String,
@@ -43,4 +49,11 @@ interface TimeLogDao {
             "GROUP BY activity_name ORDER BY useCount DESC, name ASC LIMIT :limit"
     )
     fun observeFrequent(limit: Int): Flow<List<FrequentActivityRow>>
+
+    @Query(
+        "SELECT date AS date, SUM(COALESCE(end_time, strftime('%s','now') * 1000) - start_time) AS totalMillis " +
+            "FROM time_logs WHERE date >= :from AND date <= :to " +
+            "GROUP BY date ORDER BY date ASC"
+    )
+    fun observeDailyDurations(from: LocalDate, to: LocalDate): Flow<List<DailyDurationRow>>
 }

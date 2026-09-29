@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 小组件背景：墨石斜向渐变（左上亮青黑 → 右下深黑）+ 圆角 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="135"
+        android:startColor="#242120"
+        android:centerColor="#1C1A18"
+        android:endColor="#12100F"
+        android:type="linear" />
+    <corners android:radius="24dp" />
+</shape>

@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import java.time.Clock
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.temporal.ChronoUnit
 
 class RoomStreakRepository(
@@ -85,6 +86,25 @@ class RoomStreakRepository(
             latest.copy(resolved = true, durationMinutes = durationMinutes, resolutionMethod = method)
         )
     }
+
+    override fun getDailyUrgeCounts(from: LocalDate, to: LocalDate): Flow<List<Pair<LocalDate, Int>>> =
+        urgeDao.observeBetween(dayStart(from), dayStart(to.plusDays(1))).map { events ->
+            val counts = events.groupingBy {
+                it.timestamp.atZone(clock.zone).toLocalDate()
+            }.eachCount()
+            datesUntil(from, to).map { date -> date to (counts[date] ?: 0) }
+        }
+
+    override fun getResolvedUrgeCount(from: LocalDate, to: LocalDate): Flow<Int> =
+        urgeDao.observeResolvedCountBetween(dayStart(from), dayStart(to.plusDays(1)))
+
+    override fun getCheckInDatesInMonth(month: YearMonth): Flow<Set<LocalDate>> =
+        checkInDao.observeDatesBetween(month.atDay(1), month.atEndOfMonth()).map { it.toSet() }
+
+    private fun datesUntil(from: LocalDate, to: LocalDate): List<LocalDate> =
+        generateSequence(from) { it.plusDays(1) }
+            .takeWhile { !it.isAfter(to) }
+            .toList()
 
     private fun today(): LocalDate = LocalDate.now(clock)
 

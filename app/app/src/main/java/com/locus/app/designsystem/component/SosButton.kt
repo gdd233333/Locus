@@ -28,45 +28,47 @@ fun SosButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // 光环扩散：scale 1.0→1.35，alpha 0.5→0，循环
+    // 光环扩散：scale 1.0→1.4，alpha 0.45→0，4s 潮汐节拍，常开
+    // 减弱动态时：保留一个静态低透明环（功能暗示不丢）
+    val reduceMotion = LocalReduceMotion.current
     val transition = rememberInfiniteTransition(label = "sos")
     val ringScale by transition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.4f,
+        initialValue = if (reduceMotion) 1.15f else 1f,
+        targetValue = if (reduceMotion) 1.15f else 1.4f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1800, easing = FastOutSlowInEasing),
+            animation = tween(LocusRhythm.BREATH, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Restart,
         ),
         label = "sosRingScale",
     )
     val ringAlpha by transition.animateFloat(
-        initialValue = 0.45f,
-        targetValue = 0f,
+        initialValue = if (reduceMotion) 0.12f else 0.45f,
+        targetValue = if (reduceMotion) 0.12f else 0f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1800, easing = FastOutSlowInEasing),
+            animation = tween(LocusRhythm.BREATH, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Restart,
         ),
         label = "sosRingAlpha",
     )
     val ring2Scale by transition.animateFloat(
         initialValue = 1f,
-        targetValue = 1.4f,
+        targetValue = if (reduceMotion) 1f else 1.4f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1800, 900, FastOutSlowInEasing),
+            animation = tween(LocusRhythm.BREATH, LocusRhythm.BREATH / 2, FastOutSlowInEasing),
             repeatMode = RepeatMode.Restart,
         ),
         label = "sosRing2Scale",
     )
     val ring2Alpha by transition.animateFloat(
-        initialValue = 0.45f,
+        initialValue = if (reduceMotion) 0f else 0.45f,
         targetValue = 0f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1800, 900, FastOutSlowInEasing),
+            animation = tween(LocusRhythm.BREATH, LocusRhythm.BREATH / 2, FastOutSlowInEasing),
             repeatMode = RepeatMode.Restart,
         ),
         label = "sosRing2Alpha",
     )
-    val shadowElevation = rememberBreathingAlpha(10f, 20f, 3000, label = "sosShadow")
+    val shadowElevation = rememberBreathingAlpha(10f, 20f, LocusRhythm.BREATH, label = "sosShadow")
 
     Box(
         modifier = modifier.bounceClick(scaleDown = 0.94f, onClick = onClick),
