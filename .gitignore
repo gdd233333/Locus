@@ -13,6 +13,9 @@ local.properties
 .gradle/
 *.iml
 
+# 本地协作/交接文件
+.zcode/
+
 # OS
 Thumbs.db
 .DS_Store
