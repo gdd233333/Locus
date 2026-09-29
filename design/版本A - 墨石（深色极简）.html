@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Locus — 版本A · 墨石（深色极简）</title>
+<!--
+  设计系统决策 · 版本A「墨石」
+  · 隐喻：深夜戒断者的石室。专注是沉淀，冲动是浊流，守住即澄清。
+  · 背景：近黑暖墨 #12100F（不用纯黑，避免夜间刺眼）
+  · 主强调：琥珀铜 #D9A566 —— streak、庆祝、点缀；岩金偏暖，不刺眼
+  · 次强调：烟白 #E8E3DA —— 标题、正文
+  · 三级：石灰 #8A857C —— 辅助文字、未激活态
+  · 大理石纹理：SVG turbulence 生成的琥珀色大理石流纹，透明度低，用于 streak 与背景氛围
+  · 字体：标题 DM Serif Display（衬线，古典克制），正文 Noto Sans SC，数字 Space Grotesk
+  · 动效哲学：spring 曲线 cubic-bezier(0.34, 1.56, 0.64, 1)；入场自底向上 24px 淡入
+  · 圆角：卡片 20px，大组件 28px，保持沉稳
+-->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Noto+Sans+SC:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;500;700&display=swap');
+
+  :root {
+    --bg: #12100F;
+    --surface: #1C1A18;
+    --surface-2: #242120;
+    --amber: #D9A566;
+    --amber-dim: rgba(217, 165, 102, 0.14);
+    --ink: #E8E3DA;
+    --stone: #8A857C;
+    --stone-dark: #4A463F;
+    --line: rgba(232, 227, 218, 0.08);
+    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* ---- 全局大理石氛围背景 ---- */
+  .ambient {
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+  .ambient svg { width: 100%; height: 100%; }
+
+  /* ---- 顶部文档头 ---- */
+  .doc-header {
+    position: relative; z-index: 2;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 80px 40px 60px;
+  }
+  .doc-header .ver {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    color: var(--amber);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .doc-header .ver::before { content: ''; width: 40px; height: 1px; background: var(--amber); }
+  .doc-header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(40px, 6vw, 68px);
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+  }
+  .doc-header h1 em { font-style: italic; color: var(--amber); }
+  .doc-header .sub {
+    margin-top: 20px;
+    font-size: 15px;
+    color: var(--stone);
+    max-width: 520px;
+    line-height: 1.8;
+    font-weight: 300;
+  }
+  .doc-nav { margin-top: 36px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .doc-nav a {
+    font-size: 13px;
+    color: var(--stone);
+    text-decoration: none;
+    padding: 8px 16px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    transition: all 0.35s var(--ease-out);
+  }
+  .doc-nav a:hover { color: var(--amber); border-color: var(--amber-dim); background: var(--amber-dim); }
+
+  /* ---- 设计系统 Section ---- */
+  .ds-section {
+    position: relative; z-index: 2;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 60px 40px;
+    border-top: 1px solid var(--line);
+  }
+  .ds-section .sec-label {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--stone);
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
+  .swatch { border-radius: 16px; overflow: hidden; border: 1px solid var(--line); }
+  .swatch .sw-color { height: 90px; }
+  .swatch .sw-info { padding: 14px 16px; background: var(--surface); }
+  .swatch .sw-name { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+  .swatch .sw-hex { font-family: 'Space Grotesk', monospace; font-size: 11px; color: var(--stone); }
+  .type-scale { display: flex; flex-direction: column; gap: 28px; max-width: 720px; }
+  .type-row { display: flex; align-items: baseline; gap: 24px; border-bottom: 1px solid var(--line); padding-bottom: 20px; }
+  .type-row .t-label { font-family: 'Space Grotesk', monospace; font-size: 10px; color: var(--stone); width: 90px; flex-shrink: 0; letter-spacing: 0.1em; }
+
+  /* ---- 屏幕展示 Section ---- */
+  .screens-section {
+    position: relative; z-index: 2;
+    max-width: 1480px;
+    margin: 0 auto;
+    padding: 60px 24px 120px;
+  }
+  .screens-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 60px 40px;
+    justify-items: center;
+  }
+  .screen-item { width: 100%; max-width: 400px; }
+  .screen-caption {
+    text-align: center;
+    margin-top: 24px;
+  }
+  .screen-caption .cap-title { font-family: 'DM Serif Display', serif; font-size: 20px; margin-bottom: 6px; }
+  .screen-caption .cap-desc { font-size: 13px; color: var(--stone); font-weight: 300; }
+
+  /* ---- 手机壳 ---- */
+  .phone {
+    width: 100%;
+    max-width: 390px;
+    margin: 0 auto;
+    background: var(--bg);
+    border-radius: 44px;
+    border: 1px solid rgba(232, 227, 218, 0.1);
+    box-shadow: 0 40px 80px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,0,0,0.4);
+    overflow: hidden;
+    position: relative;
+    aspect-ratio: 390 / 844;
+    display: flex;
+    flex-direction: column;
+  }
+  .phone-screen {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+    scrollbar-width: none;
+  }
+  .phone-screen::-webkit-scrollbar { display: none; }
+
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 28px 8px;
+    font-family: 'Space Grotesk', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    position: relative;
+    z-index: 10;
+  }
+  .status-bar .icons { display: flex; gap: 6px; align-items: center; }
+  .status-bar .icons svg { width: 16px; height: 16px; opacity: 0.9; }
+
+  /* ---- 通用入场动画 ---- */
+  .fade-up {
+    opacity: 0;
+    animation: fadeUp 0.9s var(--ease-out) forwards;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .d1 { animation-delay: 0.1s; } .d2 { animation-delay: 0.25s; }
+  .d3 { animation-delay: 0.4s; } .d4 { animation-delay: 0.55s; }
+
+  /* ==================== 屏幕一：戒断中心 ==================== */
+  .scr-sober { padding-bottom: 110px; }
+
+  .marble-bg {
+    position: absolute;
+    top: -20%; left: -30%;
+    width: 160%; height: 70%;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .marble-bg svg { width: 100%; height: 100%; }
+
+  .sober-header {
+    position: relative; z-index: 2;
+    padding: 24px 28px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .sober-header .greet { font-size: 14px; color: var(--stone); font-weight: 300; }
+  .sober-header .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: var(--amber);
+    font-family: 'Space Grotesk', monospace;
+  }
+
+  .streak-hero {
+    position: relative; z-index: 2;
+    text-align: center;
+    padding: 48px 28px 32px;
+  }
+  .streak-num {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 120px;
+    font-weight: 300;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--ink);
+    position: relative;
+    display: inline-block;
+  }
+  .streak-num .unit {
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--stone);
+    letter-spacing: 0;
+    margin-left: 4px;
+  }
+  .streak-label {
+    font-family: 'DM Serif Display', serif;
+    font-size: 17px;
+    color: var(--stone);
+    margin-top: 8px;
+    letter-spacing: 0.05em;
+  }
+
+  /* 大理石脉动环 */
+  .pulse-ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 220px; height: 220px;
+    border-radius: 50%;
+    border: 1px solid var(--amber-dim);
+    animation: pulse 4s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .pulse-ring.r2 { width: 260px; height: 260px; animation-delay: 1s; opacity: 0.5; }
+  @keyframes pulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+    50% { transform: translate(-50%, -50%) scale(1.06); opacity: 0.2; }
+  }
+
+  /* 冲动冲浪卡片 */
+  .urge-card {
+    position: relative; z-index: 2;
+    margin: 24px 24px 0;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 24px;
+    overflow: hidden;
+  }
+  .urge-card .uc-title {
+    font-size: 13px;
+    color: var(--stone);
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+  .urge-card .uc-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px;
+    margin-bottom: 16px;
+  }
+  .urge-wave { height: 64px; margin: 0 -24px; width: calc(100% + 48px); }
+  .urge-wave svg { width: 100%; height: 100%; }
+  .wave-path {
+    fill: none;
+    stroke: var(--amber);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-dasharray: 400;
+    stroke-dashoffset: 400;
+    animation: drawWave 2.5s var(--ease-out) 0.5s forwards;
+  }
+  @keyframes drawWave { to { stroke-dashoffset: 0; } }
+  .wave-fill {
+    fill: url(#waveGrad);
+    opacity: 0;
+    animation: fadeIn 1s ease 1.5s forwards;
+  }
+  @keyframes fadeIn { to { opacity: 1; } }
+  .urge-card .uc-hint {
+    font-size: 12px;
+    color: var(--stone);
+    font-weight: 300;
+    margin-top: 12px;
+    line-height: 1.6;
+  }
+
+  /* 快捷操作 */
+  .quick-actions {
+    position: relative; z-index: 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 20px 24px 0;
+  }
+  .qa-btn {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 20px 18px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.4s var(--spring);
+    position: relative;
+    overflow: hidden;
+  }
+  .qa-btn:hover { border-color: var(--amber-dim); transform: translateY(-2px); }
+  .qa-btn:active { transform: scale(0.97); }
+  .qa-btn .qa-icon {
+    width: 36px; height: 36px;
+    border-radius: 12px;
+    background: var(--amber-dim);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 14px;
+    color: var(--amber);
+  }
+  .qa-btn .qa-icon svg { width: 18px; height: 18px; }
+  .qa-btn .qa-title { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+  .qa-btn .qa-sub { font-size: 11px; color: var(--stone); font-weight: 300; }
+
+  /* 紧急按钮 */
+  .sos-fab {
+    position: absolute;
+    bottom: 96px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    background: var(--amber);
+    color: #12100F;
+    border: none;
+    border-radius: 999px;
+    padding: 16px 32px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'Noto Sans SC', sans-serif;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 8px 32px rgba(217, 165, 102, 0.35);
+    transition: all 0.4s var(--spring);
+    animation: sosBreathe 3s ease-in-out infinite;
+  }
+  @keyframes sosBreathe {
+    0%, 100% { box-shadow: 0 8px 32px rgba(217, 165, 102, 0.35); }
+    50% { box-shadow: 0 8px 40px rgba(217, 165, 102, 0.55); }
+  }
+  .sos-fab:active { transform: translateX(-50%) scale(0.94); }
+  .sos-fab svg { width: 18px; height: 18px; }
+
+  /* 底部导航 */
+  .bottom-nav {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 84px;
+    background: rgba(18, 16, 15, 0.85);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 20px 14px;
+    z-index: 15;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    color: var(--stone-dark);
+    font-size: 10px;
+    cursor: pointer;
+    transition: color 0.3s;
+    position: relative;
+  }
+  .nav-item.active { color: var(--amber); }
+  .nav-item svg { width: 22px; height: 22px; }
+  .nav-item .nav-dot {
+    position: absolute;
+    bottom: -8px;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--amber);
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.4s var(--spring);
+  }
+  .nav-item.active .nav-dot { opacity: 1; transform: scale(1); }
+
+  /* ==================== 屏幕二：灵感行动库 ==================== */
+  .scr-inspire { padding-bottom: 110px; }
+  .inspire-header {
+    padding: 24px 28px 8px;
+    position: relative; z-index: 2;
+  }
+  .inspire-header h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 30px;
+    font-weight: 400;
+  }
+  .inspire-header .ih-sub {
+    font-size: 13px;
+    color: var(--stone);
+    margin-top: 6px;
+    font-weight: 300;
+  }
+
+  .filter-chips {
+    display: flex;
+    gap: 8px;
+    padding: 20px 28px 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    position: relative; z-index: 2;
+  }
+  .filter-chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    font-size: 12px;
+    color: var(--stone);
+    cursor: pointer;
+    transition: all 0.35s var(--ease-out);
+    white-space: nowrap;
+  }
+  .chip.active {
+    background: var(--amber);
+    color: #12100F;
+    border-color: var(--amber);
+    font-weight: 500;
+  }
+
+  .activity-cards {
+    padding: 20px 24px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative; z-index: 2;
+  }
+  .act-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.45s var(--spring);
+  }
+  .act-card:hover { transform: translateY(-3px); border-color: rgba(217,165,102,0.2); }
+  .act-card .ac-marble {
+    position: absolute;
+    top: 0; right: 0;
+    width: 120px; height: 100%;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  .act-card .ac-time {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 11px;
+    color: var(--amber);
+    letter-spacing: 0.15em;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .act-card .ac-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 21px;
+    margin-bottom: 6px;
+    position: relative;
+  }
+  .act-card .ac-desc {
+    font-size: 13px;
+    color: var(--stone);
+    font-weight: 300;
+    line-height: 1.6;
+    max-width: 75%;
+  }
+  .act-card .ac-tag {
+    display: inline-block;
+    margin-top: 14px;
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--surface-2);
+    color: var(--stone);
+    letter-spacing: 0.05em;
+  }
+
+  .shuffle-hint {
+    text-align: center;
+    padding: 24px;
+    font-size: 12px;
+    color: var(--stone-dark);
+    position: relative; z-index: 2;
+  }
+
+  /* ==================== 屏幕三：时间规划 ==================== */
+  .scr-time { padding-bottom: 110px; }
+  .time-header {
+    padding: 24px 28px 0;
+    position: relative; z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .time-header h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 30px;
+    font-weight: 400;
+  }
+  .time-header .date {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 12px;
+    color: var(--stone);
+  }
+  .time-header .summary-chip {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 10px;
+    color: var(--amber);
+    background: var(--amber-dim);
+    padding: 4px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.1em;
+  }
+
+  .week-strip {
+    display: flex;
+    justify-content: space-between;
+    padding: 24px 28px 8px;
+    position: relative; z-index: 2;
+  }
+  .day-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+  .day-pill .dp-dot {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', monospace;
+    font-size: 13px;
+    color: var(--stone);
+    border: 1px solid transparent;
+    transition: all 0.4s var(--spring);
+  }
+  .day-pill.active .dp-dot {
+    background: var(--amber);
+    color: #12100F;
+    font-weight: 600;
+    box-shadow: 0 4px 16px rgba(217,165,102,0.3);
+  }
+  .day-pill .dp-label { font-size: 10px; color: var(--stone-dark); }
+
+  .timeline {
+    padding: 24px 24px 0;
+    position: relative; z-index: 2;
+  }
+  .tl-block {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 4px;
+    opacity: 0;
+    animation: fadeUp 0.7s var(--ease-out) forwards;
+  }
+  .tl-block .tl-time {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 11px;
+    color: var(--stone-dark);
+    width: 44px;
+    flex-shrink: 0;
+    padding-top: 16px;
+    text-align: right;
+  }
+  .tl-block .tl-line {
+    width: 1px;
+    background: var(--line);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .tl-block .tl-line::before {
+    content: '';
+    position: absolute;
+    top: 20px; left: -3.5px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    border: 2px solid var(--stone-dark);
+  }
+  .tl-block.active .tl-line::before { border-color: var(--amber); background: var(--amber); }
+  .tl-block .tl-card {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    transition: all 0.4s var(--spring);
+  }
+  .tl-block.active .tl-card { border-color: rgba(217,165,102,0.25); background: var(--surface-2); }
+  .tl-block .tl-title { font-size: 14px; font-weight: 500; margin-bottom: 3px; }
+  .tl-block .tl-meta { font-size: 11px; color: var(--stone); font-weight: 300; }
+  .tl-block .tl-progress {
+    margin-top: 12px;
+    height: 3px;
+    background: var(--surface-2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .tl-block .tl-progress-bar {
+    height: 100%;
+    background: var(--amber);
+    border-radius: 2px;
+    width: 0;
+    animation: fillBar 1.5s var(--ease-out) 0.8s forwards;
+  }
+  @keyframes fillBar { to { width: var(--w, 60%); } }
+
+  /* 正在记录 Hero 卡片 */
+  .recording-hero {
+    margin: 20px 24px 0;
+    position: relative;
+    z-index: 2;
+  }
+  .recording-card {
+    background: var(--surface);
+    border-radius: 28px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+  }
+  /* 流动大理石边框 */
+  .recording-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 28px;
+    padding: 1.5px;
+    background: linear-gradient(135deg, var(--amber) 0%, transparent 30%, transparent 70%, var(--amber) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.4;
+    animation: borderFlow 4s ease-in-out infinite;
+  }
+  @keyframes borderFlow {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.15; }
+  }
+  .recording-card .rc-marble {
+    position: absolute;
+    top: -30%; right: -20%;
+    width: 200px; height: 200%;
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  .recording-card .rc-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .recording-card .rc-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--amber);
+    animation: rcPulse 2s ease-in-out infinite;
+  }
+  @keyframes rcPulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(217,165,102,0.4); }
+    50% { opacity: 0.6; box-shadow: 0 0 0 6px rgba(217,165,102,0); }
+  }
+  .recording-card .rc-status-text {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--amber);
+    text-transform: uppercase;
+  }
+  .recording-card .rc-activity {
+    font-family: 'DM Serif Display', serif;
+    font-size: 32px;
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .recording-card .rc-time-range {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 13px;
+    color: var(--stone);
+    margin-bottom: 20px;
+  }
+  .recording-card .rc-elapsed {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 64px;
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: var(--ink);
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .recording-card .rc-end-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--amber);
+    color: #12100F;
+    border: none;
+    border-radius: 16px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'Noto Sans SC', sans-serif;
+    cursor: pointer;
+    transition: all 0.4s var(--spring);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    position: relative;
+  }
+  .recording-card .rc-end-btn:active { transform: scale(0.97); }
+  .recording-card .rc-end-btn svg { width: 18px; height: 18px; }
+
+  /* 空闲状态卡片 */
+  .idle-card {
+    margin: 20px 24px 0;
+    background: var(--surface);
+    border: 1px dashed var(--stone-dark);
+    border-radius: 28px;
+    padding: 32px 28px;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+  }
+  .idle-card .ic-text {
+    font-size: 14px;
+    color: var(--stone);
+    margin-bottom: 20px;
+    font-weight: 300;
+  }
+  .idle-card .ic-start-btn {
+    padding: 14px 32px;
+    background: transparent;
+    color: var(--amber);
+    border: 1px solid var(--amber-dim);
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: 'Noto Sans SC', sans-serif;
+    cursor: pointer;
+    transition: all 0.4s var(--spring);
+  }
+  .idle-card .ic-start-btn:hover { background: var(--amber-dim); }
+  .idle-card .ic-start-btn:active { transform: scale(0.95); }
+
+  /* 时间线条目（记录模式） */
+  .log-entries {
+    padding: 24px 24px 0;
+    position: relative;
+    z-index: 2;
+  }
+  .log-entries .le-label {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--stone-dark);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .log-entry {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 2px;
+    opacity: 0;
+    animation: fadeUp 0.7s var(--ease-out) forwards;
+  }
+  .log-entry .le-time-col {
+    width: 72px;
+    flex-shrink: 0;
+    text-align: right;
+    padding-top: 14px;
+  }
+  .log-entry .le-start {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 12px;
+    color: var(--stone);
+    display: block;
+  }
+  .log-entry .le-end {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 10px;
+    color: var(--stone-dark);
+    display: block;
+    margin-top: 2px;
+  }
+  .log-entry .le-line {
+    width: 1px;
+    background: var(--line);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .log-entry .le-line::before {
+    content: '';
+    position: absolute;
+    top: 18px; left: -3px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    border: 1.5px solid var(--stone-dark);
+  }
+  .log-entry .le-card {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.4s var(--spring);
+  }
+  .log-entry .le-card:hover { border-color: rgba(217,165,102,0.15); }
+  .log-entry .le-name { font-size: 14px; font-weight: 500; }
+  .log-entry .le-duration {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 12px;
+    color: var(--stone);
+    background: var(--surface-2);
+    padding: 4px 10px;
+    border-radius: 8px;
+  }
+
+  /* ---- 响应式 ---- */
+  @media (max-width: 640px) {
+    .doc-header { padding: 48px 24px 40px; }
+    .ds-section { padding: 40px 24px; }
+    .screens-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 氛围大理石背景 -->
+<div class="ambient">
+  <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <filter id="marbleNoise" x="0%" y="0%" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.004 0.008" numOctaves="4" seed="7" result="noise"/>
+        <feColorMatrix in="noise" type="matrix" values="0 0 0 0 0.85  0 0 0 0 0.62  0 0 0 0 0.38  0 0 0 0.06 0"/>
+      </filter>
+    </defs>
+    <rect width="1440" height="900" filter="url(#marbleNoise)"/>
+  </svg>
+</div>
+
+<!-- 文档头 -->
+<header class="doc-header">
+  <div class="ver">Locus · Design System · Version A</div>
+  <h1>墨石 <em>Inkstone</em></h1>
+  <p class="sub">深夜戒断者的石室。专注是沉淀，冲动是浊流，守住即澄清。琥珀为引，大理石为脉，一切喧嚣止于石。</p>
+  <nav class="doc-nav">
+    <a href="#tokens">色彩与字体</a>
+    <a href="#screens">界面打样</a>
+  </nav>
+</header>
+
+<!-- 设计系统 Tokens -->
+<section class="ds-section" id="tokens">
+  <div class="sec-label">Color Tokens</div>
+  <div class="swatches">
+    <div class="swatch"><div class="sw-color" style="background:#12100F"></div><div class="sw-info"><div class="sw-name">墨底 Ink</div><div class="sw-hex">#12100F</div></div></div>
+    <div class="swatch"><div class="sw-color" style="background:#1C1A18"></div><div class="sw-info"><div class="sw-name">石面 Surface</div><div class="sw-hex">#1C1A18</div></div></div>
+    <div class="swatch"><div class="sw-color" style="background:#D9A566"></div><div class="sw-info"><div class="sw-name">琥珀铜 Amber</div><div class="sw-hex">#D9A566</div></div></div>
+    <div class="swatch"><div class="sw-color" style="background:#E8E3DA"></div><div class="sw-info"><div class="sw-name">烟白 Smoke</div><div class="sw-hex">#E8E3DA</div></div></div>
+    <div class="swatch"><div class="sw-color" style="background:#8A857C"></div><div class="sw-info"><div class="sw-name">石灰 Stone</div><div class="sw-hex">#8A857C</div></div></div>
+    <div class="swatch"><div class="sw-color" style="background:#4A463F"></div><div class="sw-info"><div class="sw-name">暗石 Dark Stone</div><div class="sw-hex">#4A463F</div></div></div>
+  </div>
+
+  <div class="sec-label" style="margin-top:48px">Typography</div>
+  <div class="type-scale">
+    <div class="type-row"><span class="t-label">DISPLAY</span><span style="font-family:'DM Serif Display',serif;font-size:34px">戒断 23 天</span></div>
+    <div class="type-row"><span class="t-label">HEADING</span><span style="font-family:'DM Serif Display',serif;font-size:24px">冲动会来，也会走</span></div>
+    <div class="type-row"><span class="t-label">BODY</span><span style="font-size:15px;font-weight:300">今晚的冲动强度比昨天低了 40%，继续保持。</span></div>
+    <div class="type-row"><span class="t-label">MONO</span><span style="font-family:'Space Grotesk',monospace;font-size:14px;letter-spacing:0.1em">23 DAYS · STREAK</span></div>
+  </div>
+</section>
+
+<!-- 界面打样 -->
+<section class="screens-section" id="screens">
+  <div class="screens-grid">
+
+    <!-- ========== 屏幕一：戒断中心 ========== -->
+    <div class="screen-item">
+      <div class="phone">
+        <div class="phone-screen scr-sober">
+          <!-- 大理石背景 -->
+          <div class="marble-bg">
+            <svg viewBox="0 0 390 500" preserveAspectRatio="xMidYMid slice">
+              <defs>
+                <filter id="mNoise" x="0%" y="0%" width="100%" height="100%">
+                  <feTurbulence type="fractalNoise" baseFrequency="0.008 0.015" numOctaves="4" seed="12" result="n"/>
+                  <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.85  0 0 0 0 0.65  0 0 0 0 0.4  0 0 0 0.1 0"/>
+                </filter>
+              </defs>
+              <rect width="390" height="500" filter="url(#mNoise)"/>
+            </svg>
+          </div>
+
+          <div class="status-bar">
+            <span>21:47</span>
+            <div class="icons">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C7 3 3 7 3 12s4 9 9 9 9-4 9-9-4-9-9-9zm0 16c-3.9 0-7-3.1-7-7s3.1-7 7-7 7 3.1 7 7-3.1 7-7 7z"/></svg>
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4zM13 18h-2v-2h2v2zm0-4h-2V9h2v5z"/></svg>
+            </div>
+          </div>
+
+          <div class="sober-header fade-up d1">
+            <span class="greet">晚上好，守住今夜</span>
+            <div class="avatar">K</div>
+          </div>
+
+          <div class="streak-hero fade-up d2">
+            <div class="pulse-ring"></div>
+            <div class="pulse-ring r2"></div>
+            <div class="streak-num">23<span class="unit">天</span></div>
+            <div class="streak-label">连续守护 · 个人最佳</div>
+          </div>
+
+          <div class="urge-card fade-up d3">
+            <div class="uc-title">URGE SURFING · 冲动冲浪</div>
+            <div class="uc-value">冲动峰值已过</div>
+            <div class="urge-wave">
+              <svg viewBox="0 0 342 64" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="waveGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#D9A566" stop-opacity="0.25"/>
+                    <stop offset="100%" stop-color="#D9A566" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path class="wave-fill" d="M0,50 C30,50 45,20 75,18 C105,16 120,45 150,48 C180,51 195,30 225,28 C255,26 270,50 300,52 C320,53 342,48 342,48 L342,64 L0,64 Z"/>
+                <path class="wave-path" d="M0,50 C30,50 45,20 75,18 C105,16 120,45 150,48 C180,51 195,30 225,28 C255,26 270,50 300,52 C320,53 342,48 342,48"/>
+              </svg>
+            </div>
+            <div class="uc-hint">今晚 20:30 出现一次中度冲动，持续约 12 分钟，已通过冲浪练习平复。</div>
+          </div>
+
+          <div class="quick-actions fade-up d4">
+            <button class="qa-btn">
+              <div class="qa-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+              <div class="qa-title">打卡守护</div>
+              <div class="qa-sub">记录今夜状态</div>
+            </button>
+            <button class="qa-btn">
+              <div class="qa-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+              <div class="qa-title">冲浪练习</div>
+              <div class="qa-sub">10分钟冥想</div>
+            </button>
+          </div>
+
+          <button class="sos-fab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+            冲动急救
+          </button>
+
+          <div class="bottom-nav">
+            <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>守护</span><span class="nav-dot"></span></div>
+            <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/><path d="M2 12h20"/></svg><span>灵感</span><span class="nav-dot"></span></div>
+            <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>记录</span><span class="nav-dot"></span></div>
+            <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg><span>复盘</span><span class="nav-dot"></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-caption">
+        <div class="cap-title">戒断中心</div>
+        <div class="cap-desc">大理石氛围下的大数字 streak，冲动冲浪曲线可视化，底部常驻急救按钮</div>
+      </div>
+    </div>
+
+    <!-- ========== 屏幕二：灵感行动库 ========== -->
+    <div class="screen-item">
+      <div class="phone">
+        <div class="phone-screen scr-inspire">
+          <div class="status-bar">
+            <span>21:52</span>
+            <div class="icons">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C7 3 3 7 3 12s4 9 9 9 9-4 9-9-4-9-9-9zm0 16c-3.9 0-7-3.1-7-7s3.1-7 7-7 7 3.1 7 7-3.1 7-7 7z"/></svg>
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4zM13 18h-2v-2h2v2zm0-4h-2V9h2v5z"/></svg>
+            </div>
+          </div>
+
+          <div class="inspire-header fade-up d1">
+            <h2>现在，做点别的</h2>
+            <div class="ih-sub">根据当下状态，为你推荐三件事</div>
+          </div>
+
+          <div class="filter-chips fade-up d2">
+            <div class="chip active">此刻推荐</div>
+            <div class="chip">5 分钟</div>
+            <div class="chip">30 分钟</div>
+            <div class="chip">出门走走</div>
+            <div class="chip">动手创作</div>
+          </div>
+
+          <div class="activity-cards">
+            <div class="act-card fade-up d2">
+              <div class="ac-marble">
+                <svg viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice">
+                  <defs><filter id="am1"><feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" seed="5"/><feColorMatrix type="matrix" values="0 0 0 0 0.85  0 0 0 0 0.65  0 0 0 0 0.4  0 0 0 0.12 0"/></filter></defs>
+                  <rect width="120" height="160" filter="url(#am1)"/>
+                </svg>
+              </div>
+              <div class="ac-time"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>5 MIN</div>
+              <div class="ac-title">冷水洗脸 + 深呼吸</div>
+              <div class="ac-desc">物理打断当前状态，让大脑从冲动中抽离。冷水刺激迷走神经，快速降低唤醒水平。</div>
+              <div class="ac-tag">冲动急救</div>
+            </div>
+
+            <div class="act-card fade-up d3">
+              <div class="ac-marble">
+                <svg viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice">
+                  <defs><filter id="am2"><feTurbulence type="fractalNoise" baseFrequency="0.025" numOctaves="3" seed="9"/><feColorMatrix type="matrix" values="0 0 0 0 0.85  0 0 0 0 0.65  0 0 0 0 0.4  0 0 0 0.12 0"/></filter></defs>
+                  <rect width="120" height="160" filter="url(#am2)"/>
+                </svg>
+              </div>
+              <div class="ac-time"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>20 MIN</div>
+              <div class="ac-title">出门快走一圈</div>
+              <div class="ac-desc">不带手机，只带钥匙。让身体动起来，让视线离开屏幕。夜风是最好的清醒剂。</div>
+              <div class="ac-tag">户外</div>
+            </div>
+
+            <div class="act-card fade-up d4">
+              <div class="ac-marble">
+                <svg viewBox="0 0 120 160" preserveAspectRatio="xMidYMid slice">
+                  <defs><filter id="am3"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="14"/><feColorMatrix type="matrix" values="0 0 0 0 0.85  0 0 0 0 0.65  0 0 0 0 0.4  0 0 0 0.12 0"/></filter></defs>
+                  <rect width="120" height="160" filter="url(#am3)"/>
+                </svg>
+              </div>
+              <div class="ac-time"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>45 MIN</div>
+              <div class="ac-title">读 20 页书</div>
+              <div class="ac-desc">纸质书优先。如果读不进去，就从最薄的那本开始。读不下去也是正常的，翻页即是胜利。</div>
+              <div class="ac-tag">输入</div>
+            </div>
+          </div>
+
+          <div class="shuffle-hint fade-up d4">都不想做？摇一摇换一批 →</div>
+
+          <div class="bottom-nav">
+            <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>守护</span><span class="nav-dot"></span></div>
+            <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/><path d="M2 12h20"/></svg><span>灵感</span><span class="nav-dot"></span></div>
+            <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>记录</span><span class="nav-dot"></span></div>
+            <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg><span>复盘</span><span class="nav-dot"></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-caption">
+        <div class="cap-title">灵感行动库</div>
+        <div class="cap-desc">按时长筛选的随机活动卡片，大理石纹理点缀右侧，摇一摇换一批</div>
+      </div>
+    </div>
+
+    <!-- ========== 屏幕三：时间规划 ========== -->
+    <div class="screen-item">
+      <div class="phone">
+        <div class="phone-screen scr-time">
+          <div class="status-bar">
+            <span>22:03</span>
+            <div class="icons">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C7 3 3 7 3 12s4 9 9 9 9-4 9-9-4-9-9-9zm0 16c-3.9 0-7-3.1-7-7s3.1-7 7-7 7 3.1 7 7-3.1 7-7 7z"/></svg>
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4zM13 18h-2v-2h2v2zm0-4h-2V9h2v5z"/></svg>
+            </div>
+          </div>
+
+          <div class="time-header fade-up d1">
+            <div>
+              <h2>时间记录</h2>
+              <div class="date">9.29 周一</div>
+            </div>
+            <div class="summary-chip">已记录 4 段</div>
+          </div>
+
+          <div class="week-strip fade-up d2">
+            <div class="day-pill"><div class="dp-dot">25</div><div class="dp-label">四</div></div>
+            <div class="day-pill"><div class="dp-dot">26</div><div class="dp-label">五</div></div>
+            <div class="day-pill"><div class="dp-dot">27</div><div class="dp-label">六</div></div>
+            <div class="day-pill"><div class="dp-dot">28</div><div class="dp-label">日</div></div>
+            <div class="day-pill active"><div class="dp-dot">29</div><div class="dp-label">一</div></div>
+            <div class="day-pill"><div class="dp-dot">30</div><div class="dp-label">二</div></div>
+            <div class="day-pill"><div class="dp-dot">1</div><div class="dp-label">三</div></div>
+          </div>
+
+          <!-- 正在记录 -->
+          <div class="recording-hero fade-up d3">
+            <div class="recording-card">
+              <div class="rc-marble">
+                <svg viewBox="0 0 200 400" preserveAspectRatio="xMidYMid slice">
+                  <defs>
+                    <filter id="rcMarble"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" seed="18"/><feColorMatrix type="matrix" values="0 0 0 0 0.85  0 0 0 0 0.65  0 0 0 0 0.4  0 0 0 0.1 0"/></filter>
+                  </defs>
+                  <rect width="200" height="400" filter="url(#rcMarble)"/>
+                </svg>
+              </div>
+              <div class="rc-status">
+                <div class="rc-dot"></div>
+                <div class="rc-status-text">正在记录</div>
+              </div>
+              <div class="rc-activity">刷手机</div>
+              <div class="rc-time-range">22:03 开始</div>
+              <div class="rc-elapsed">47:23</div>
+              <button class="rc-end-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                结束记录
+              </button>
+            </div>
+          </div>
+
+          <!-- 今日已记录 -->
+          <div class="log-entries fade-up d4">
+            <div class="le-label">今日已记录</div>
+
+            <div class="log-entry" style="animation-delay:0.5s">
+              <div class="le-time-col">
+                <span class="le-start">19:00</span>
+                <span class="le-end">19:45</span>
+              </div>
+              <div class="le-line"></div>
+              <div class="le-card">
+                <div class="le-name">晚餐</div>
+                <div class="le-duration">45 分钟</div>
+              </div>
+            </div>
+
+            <div class="log-entry" style="animation-delay:0.6s">
+              <div class="le-time-col">
+                <span class="le-start">19:45</span>
+                <span class="le-end">21:30</span>
+              </div>
+              <div class="le-line"></div>
+              <div class="le-card">
+                <div class="le-name">图书馆自习</div>
+                <div class="le-duration">1 时 45 分</div>
+              </div>
+            </div>
+
+            <div class="log-entry" style="animation-delay:0.7s">
+              <div class="le-time-col">
+                <span class="le-start">21:30</span>
+                <span class="le-end">22:03</span>
+              </div>
+              <div class="le-line"></div>
+              <div class="le-card">
+                <div class="le-name">走路回宿舍</div>
+                <div class="le-duration">33 分钟</div>
+              </div>
+            </div>
+
+            <div class="log-entry" style="animation-delay:0.8s">
+              <div class="le-time-col">
+                <span class="le-start">22:03</span>
+                <span class="le-end">进行中</span>
+              </div>
+              <div class="le-line"></div>
+              <div class="le-card" style="border-color: rgba(217,165,102,0.2);">
+                <div class="le-name" style="color: var(--amber);">刷手机</div>
+                <div class="le-duration" style="color: var(--amber); background: var(--amber-dim);">47 分钟</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>守护</span><span class="nav-dot"></span></div>
+            <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/><path d="M2 12h20"/></svg><span>灵感</span><span class="nav-dot"></span></div>
+            <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>记录</span><span class="nav-dot"></span></div>
+            <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg><span>复盘</span><span class="nav-dot"></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-caption">
+        <div class="cap-title">时间记录</div>
+        <div class="cap-desc">手动记录每段时间的去向，正在记录的时段以流动大理石边框高亮，事后复盘用</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</body>
+</html>

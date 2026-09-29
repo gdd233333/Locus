@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Locus — 版本B · 陶土（温暖纸感）</title>
+<!--
+  设计系统决策 · 版本B「陶土」
+  · 隐喻：手账、陶器、大地。戒断不是对抗，是滋养；恢复如陶土在窑中缓慢成型。
+  · 背景：暖米白 #F5F0E8，带纸张颗粒质感（SVG noise 叠加）
+  · 主强调：赤陶 #C4703F —— 打卡、强调、行动按钮；大地之色，温暖而有力量
+  · 次强调：苔绿 #6B7C5E —— 时间规划、成长、平静
+  · 墨色：#3A322A 深棕墨，替代纯黑，纸感更柔
+  · 大理石纹理：赤陶与米白交织的流体纹路，如陶土拉坯时的泥浆流动
+  · 字体：标题 Cormorant Garamond（衬线，手账感），正文 Noto Sans SC，数字 Space Grotesk
+  · 动效哲学：更柔和的 spring，带轻微 overshoot；入场带 8° 微旋转，如纸片飘落
+  · 圆角：更大，卡片 24-32px，有机感；边缘偶有手绘感的 1px 偏移边框
+-->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Sans+SC:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;500;700&display=swap');
+
+  :root {
+    --bg: #F5F0E8;
+    --surface: #FFFFFF;
+    --surface-2: #EDE6DA;
+    --terra: #C4703F;
+    --terra-dim: rgba(196, 112, 63, 0.1);
+    --moss: #6B7C5E;
+    --moss-dim: rgba(107, 124, 94, 0.1);
+    --ink: #3A322A;
+    --stone: #9A8F80;
+    --line: rgba(58, 50, 42, 0.08);
+    --spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* 纸张颗粒 */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.35;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+  }
+
+  /* 陶土流体氛围 */
+  .ambient {
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+  .ambient svg { width: 100%; height: 100%; }
+
+  .doc-header {
+    position: relative; z-index: 2;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 80px 40px 60px;
+  }
+  .doc-header .ver {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    color: var(--terra);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .doc-header .ver::before { content: ''; width: 40px; height: 1px; background: var(--terra); }
+  .doc-header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(44px, 6vw, 72px);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+  }
+  .doc-header h1 em { font-style: italic; color: var(--terra); }
+  .doc-header .sub {
+    margin-top: 20px;
+    font-size: 15px;
+    color: var(--stone);
+    max-width: 520px;
+    line-height: 1.9;
+    font-weight: 300;
+  }
+  .doc-nav { margin-top: 36px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .doc-nav a {
+    font-size: 13px;
+    color: var(--stone);
+    text-decoration: none;
+    padding: 8px 18px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    transition: all 0.35s var(--ease-out);
+    background: rgba(255,255,255,0.5);
+  }
+  .doc-nav a:hover { color: var(--terra); border-color: var(--terra-dim); background: var(--terra-dim); }
+
+  .ds-section {
+    position: relative; z-index: 2;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 60px 40px;
+    border-top: 1px solid var(--line);
+  }
+  .ds-section .sec-label {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--stone);
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
+  .swatch { border-radius: 20px; overflow: hidden; border: 1px solid var(--line); background: var(--surface); }
+  .swatch .sw-color { height: 90px; }
+  .swatch .sw-info { padding: 14px 16px; }
+  .swatch .sw-name { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+  .swatch .sw-hex { font-family: 'Space Grotesk', monospace; font-size: 11px; color: var(--stone); }
+  .type-scale { display: flex; flex-direction: column; gap: 28px; max-width: 720px; }
+  .type-row { display: flex; align-items: baseline; gap: 24px; border-bottom: 1px solid var(--line); padding-bottom: 20px; }
+  .type-row .t-label { font-family: 'Space Grotesk', monospace; font-size: 10px; color: var(--stone); width: 90px; flex-shrink: 0; letter-spacing: 0.1em; }
+
+  .screens-section {
+    position: relative; z-index: 2;
+    max-width: 1480px;
+    margin: 0 auto;
+    padding: 60px 24px 120px;
+  }
+  .screens-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 60px 40px;
+    justify-items: center;
+  }
+  .screen-item { width: 100%; max-width: 400px; }
+  .screen-caption { text-align: center; margin-top: 24px; }
+  .screen-caption .cap-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+  .screen-caption .cap-desc { font-size: 13px; color: var(--stone); font-weight: 300; }
+
+  .phone {
+    width: 100%;
+    max-width: 390px;
+    margin: 0 auto;
+    background: var(--bg);
+    border-radius: 44px;
+    border: 1px solid rgba(58,50,42,0.1);
+    box-shadow: 0 24px 60px -16px rgba(58,50,42,0.18), 0 0 0 1px rgba(58,50,42,0.04);
+    overflow: hidden;
+    position: relative;
+    aspect-ratio: 390 / 844;
+    display: flex;
+    flex-direction: column;
+  }
+  .phone-screen {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+    scrollbar-width: none;
+  }
+  .phone-screen::-webkit-scrollbar { display: none; }
+
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 28px 8px;
+    font-family: 'Space Grotesk', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    position: relative;
+    z-index: 10;
+  }
+  .status-bar .icons { display: flex; gap: 6px; align-items: center; }
+  .status-bar .icons svg { width: 16px; height: 16px; opacity: 0.8; }
+
+  /* 纸片飘落式入场 */
+  .fade-up {
+    opacity: 0;
+    animation: fadeUp 1s var(--ease-out) forwards;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(28px) rotate(1.5deg); }
+    to { opacity: 1; transform: translateY(0) rotate(0); }
+  }
+  .d1 { animation-delay: 0.1s; } .d2 { animation-delay: 0.25s; }
+  .d3 { animation-delay: 0.4s; } .d4 { animation-delay: 0.55s; }
+
+  /* ==================== 戒断中心 ==================== */
+  .scr-sober { padding-bottom: 110px; }
+
+  .clay-bg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 55%;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .clay-bg svg { width: 100%; height: 100%; }
+
+  .sober-header {
+    position: relative; z-index: 2;
+    padding: 24px 28px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .sober-header .greet { font-size: 14px; color: var(--stone); font-weight: 300; }
+  .sober-header .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--terra-dim);
+    border: 1px solid rgba(196,112,63,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: var(--terra);
+    font-family: 'Space Grotesk', monospace;
+  }
+
+  .streak-hero {
+    position: relative; z-index: 2;
+    text-align: center;
+    padding: 44px 28px 28px;
+  }
+  .streak-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 130px;
+    font-weight: 500;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    position: relative;
+    display: inline-block;
+  }
+  .streak-num .unit {
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--stone);
+    letter-spacing: 0;
+    margin-left: 2px;
+  }
+  .streak-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    color: var(--stone);
+    margin-top: 10px;
+    letter-spacing: 0.03em;
+    font-style: italic;
+  }
+
+  /* 陶土色印章式圆环 */
+  .seal-ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -52%);
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(196,112,63,0.2);
+    pointer-events: none;
+  }
+  .seal-ring::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 1px dashed rgba(196,112,63,0.12);
+    animation: sealSpin 40s linear infinite;
+  }
+  @keyframes sealSpin { to { transform: rotate(360deg); } }
+
+  .urge-card {
+    position: relative; z-index: 2;
+    margin: 20px 24px 0;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(58,50,42,0.06);
+  }
+  .urge-card .uc-title {
+    font-size: 11px;
+    color: var(--stone);
+    letter-spacing: 0.15em;
+    margin-bottom: 4px;
+    font-family: 'Space Grotesk', monospace;
+  }
+  .urge-card .uc-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+  .urge-wave { height: 60px; margin: 0 -24px; width: calc(100% + 48px); }
+  .urge-wave svg { width: 100%; height: 100%; }
+  .wave-path {
+    fill: none;
+    stroke: var(--terra);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-dasharray: 400;
+    stroke-dashoffset: 400;
+    animation: drawWave 2.5s var(--ease-out) 0.5s forwards;
+  }
+  @keyframes drawWave { to { stroke-dashoffset: 0; } }
+  .wave-fill {
+    fill: url(#waveGradB);
+    opacity: 0;
+    animation: fadeIn 1s ease 1.5s forwards;
+  }
+  @keyframes fadeIn { to { opacity: 1; } }
+  .urge-card .uc-hint {
+    font-size: 12px;
+    color: var(--stone);
+    font-weight: 300;
+    margin-top: 12px;
+    line-height: 1.7;
+  }
+
+  .quick-actions {
+    position: relative; z-index: 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 20px 24px 0;
+  }
+  .qa-btn {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 20px 18px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.45s var(--spring);
+    box-shadow: 0 2px 12px rgba(58,50,42,0.05);
+  }
+  .qa-btn:hover { border-color: rgba(196,112,63,0.2); transform: translateY(-3px) rotate(-0.5deg); }
+  .qa-btn:active { transform: scale(0.96); }
+  .qa-btn .qa-icon {
+    width: 38px; height: 38px;
+    border-radius: 14px;
+    background: var(--terra-dim);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 14px;
+    color: var(--terra);
+  }
+  .qa-btn .qa-icon svg { width: 18px; height: 18px; }
+  .qa-btn .qa-title { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+  .qa-btn .qa-sub { font-size: 11px; color: var(--stone); font-weight: 300; }
+
+  .sos-fab {
+    position: absolute;
+    bottom: 96px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    background: var(--terra);
+    color: #F5F0E8;
+    border: none;
+    border-radius: 999px;
+    padding: 16px 34px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'Noto Sans SC', sans-serif;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 8px 28px rgba(196,112,63,0.35);
+    transition: all 0.45s var(--spring);
+    animation: sosBreathe 3.5s ease-in-out infinite;
+  }
+  @keyframes sosBreathe {
+    0%, 100% { box-shadow: 0 8px 28px rgba(196,112,63,0.35); }
+    50% { box-shadow: 0 8px 36px rgba(196,112,63,0.5); }
+  }
+  .sos-fab:active { transform: translateX(-50%) scale(0.94); }
+  .sos-fab svg { width: 18px; height: 18px; }
+
+  .bottom-nav {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 84px;
+    background: rgba(245,240,232,0.88);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 20px 14px;
+    z-index: 15;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    color: #B8AE9E;
+    font-size: 10px;
+    cursor: pointer;
+    transition: color 0.3s;
+    position: relative;
+  }
+  .nav-item.active { color: var(--terra); }
+  .nav-item svg { width: 22px; height: 22px; }
+  .nav-item .nav-dot {
+    position: absolute;
+    bottom: -8px;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--terra);
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.45s var(--spring);
+  }
+  .nav-item.active .nav-dot { opacity: 1; transform: scale(1); }
+
+  /* ==================== 灵感行动库 ==================== */
+  .scr-inspire { padding-bottom: 110px; }
+  .inspire-header {
+    padding: 24px 28px 8px;
+    position: relative; z-index: 2;
+  }
+  .inspire-header h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 600;
+  }
+  .inspire-header .ih-sub {
+    font-size: 13px;
+    color: var(--stone);
+    margin-top: 6px;
+    font-weight: 300;
+  }
+
+  .filter-chips {
+    display: flex;
+    gap: 8px;
+    padding: 20px 28px 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    position: relative; z-index: 2;
+  }
+  .filter-chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex-shrink: 0;
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    font-size: 12px;
+    color: var(--stone);
+    cursor: pointer;
+    transition: all 0.35s var(--ease-out);
+    white-space: nowrap;
+    background: rgba(255,255,255,0.6);
+  }
+  .chip.active {
+    background: var(--terra);
+    color: #F5F0E8;
+    border-color: var(--terra);
+    font-weight: 500;
+  }
+
+  .activity-cards {
+    padding: 20px 24px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    position: relative; z-index: 2;
+  }
+  .act-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    padding: 26px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.5s var(--spring);
+    box-shadow: 0 4px 16px rgba(58,50,42,0.05);
+  }
+  .act-card:hover { transform: translateY(-4px) rotate(0.5deg); box-shadow: 0 12px 32px rgba(58,50,42,0.1); }
+  .act-card .ac-clay {
+    position: absolute;
+    top: 0; right: 0;
+    width: 110px; height: 100%;
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .act-card .ac-time {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 11px;
+    color: var(--terra);
+    letter-spacing: 0.15em;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .act-card .ac-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 23px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    position: relative;
+  }
+  .act-card .ac-desc {
+    font-size: 13px;
+    color: var(--stone);
+    font-weight: 300;
+    line-height: 1.7;
+    max-width: 72%;
+  }
+  .act-card .ac-tag {
+    display: inline-block;
+    margin-top: 14px;
+    font-size: 10px;
+    padding: 5px 12px;
+    border-radius: 8px;
+    background: var(--surface-2);
+    color: var(--stone);
+    letter-spacing: 0.05em;
+  }
+
+  .shuffle-hint {
+    text-align: center;
+    padding: 24px;
+    font-size: 12px;
+    color: #C4B9A8;
+    position: relative; z-index: 2;
+  }
+
+  /* ==================== 时间规划 ==================== */
+  .scr-time { padding-bottom: 110px; }
+  .time-header {
+    padding: 24px 28px 0;
+    position: relative; z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .time-header h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 600;
+  }
+  .time-header .date {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 12px;
+    color: var(--stone);
+  }
+
+  .week-strip {
+    display: flex;
+    justify-content: space-between;
+    padding: 24px 28px 8px;
+    position: relative; z-index: 2;
+  }
+  .day-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+  .day-pill .dp-dot {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', monospace;
+    font-size: 13px;
+    color: var(--stone);
+    border: 1px solid transparent;
+    transition: all 0.45s var(--spring);
+  }
+  .day-pill.active .dp-dot {
+    background: var(--moss);
+    color: #F5F0E8;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(107,124,94,0.3);
+  }
+  .day-pill .dp-label { font-size: 10px; color: #C4B9A8; }
+
+  .timeline {
+    padding: 24px 24px 0;
+    position: relative; z-index: 2;
+  }
+  .tl-block {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 4px;
+    opacity: 0;
+    animation: fadeUp 0.8s var(--ease-out) forwards;
+  }
+  .tl-block .tl-time {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 11px;
+    color: #C4B9A8;
+    width: 44px;
+    flex-shrink: 0;
+    padding-top: 16px;
+    text-align: right;
+  }
+  .tl-block .tl-line {
+    width: 1px;
+    background: var(--line);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .tl-block .tl-line::before {
+    content: '';
+    position: absolute;
+    top: 20px; left: -3.5px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid #D5CBB8;
+  }
+  .tl-block.active .tl-line::before { border-color: var(--moss); background: var(--moss); }
+  .tl-block .tl-card {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    transition: all 0.45s var(--spring);
+    box-shadow: 0 2px 10px rgba(58,50,42,0.04);
+  }
+  .tl-block.active .tl-card { border-color: rgba(107,124,94,0.2); background: #FAF7F0; }
+  .tl-block .tl-title { font-size: 14px; font-weight: 500; margin-bottom: 3px; }
+  .tl-block .tl-meta { font-size: 11px; color: var(--stone); font-weight: 300; }
+  .tl-block .tl-progress {
+    margin-top: 12px;
+    height: 4px;
+    background: var(--surface-2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .tl-block .tl-progress-bar {
+    height: 100%;
+    background: var(--moss);
+    border-radius: 3px;
+    width: 0;
+    animation: fillBar 1.5s var(--ease-out) 0.8s forwards;
+  }
+  @keyframes fillBar { to { width: var(--w, 60%); } }
+
+  .pomo-float {
+    margin: 20px 24px 0;
+    background: var(--surface);
+    border: 1px solid rgba(107,124,94,0.15);
+    border-radius: 28px;
+    padding: 24px;
+    position: relative;
+    z-index: 2;
+    overflow: hidden;
+    box-shadow: 0 6px 24px rgba(58,50,42,0.07);
+  }
+  .pomo-float .pf-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--moss);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    font-family: 'Space Grotesk', monospace;
+  }
+  .pomo-float .pf-time {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 60px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+  .pomo-float .pf-task { font-size: 13px; color: var(--stone); margin-top: 8px; font-weight: 300; }
+  .pomo-float .pf-ring {
+    position: absolute;
+    right: 24px; top: 50%;
+    transform: translateY(-50%);
+    width: 76px; height: 76px;
+  }
+  .pf-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .pf-ring .ring-bg { fill: none; stroke: var(--surface-2); stroke-width: 3.5; }
+  .pf-ring .ring-fg {
+    fill: none; stroke: var(--moss); stroke-width: 3.5;
+    stroke-linecap: round;
+    stroke-dasharray: 226;
+    stroke-dashoffset: 68;
+    animation: ringGo 2s var(--ease-out) 0.5s forwards;
+  }
+  @keyframes ringGo { from { stroke-dashoffset: 226; } to { stroke-dashoffset: 68; } }
+
+  .add-block-btn {
+    margin: 20px 24px 0;
+    padding: 18px;
+    border: 1.5px dashed #D5CBB8;
+    border-radius: 22px;
+    text-align: center;
+    color: var(--stone);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.35s;
+    position: relative; z-index: 2;
+  }
+  .add-block-btn:hover { border-color: var(--moss); color: var(--moss); }
+
+  @media (max-width: 640px) {
+    .doc-header { padding: 48px 24px 40px; }
+    .ds-section { padding: 40px 24px; }
+    .screens-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ambient">
+  <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <filter id="clayNoise" x="0%" y="0%" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.005 0.01" numOctaves="4" seed="3" result="noise"/>
+        <feColorMatrix in="noise" type="matrix" values="0 0 0 0 0.77  0 0 0 0 0.44  0 0 0 0 0.25  0 0 0 0.05 0"/>
+      </filter>
+    </defs>
+    <rect width="1440" height="900" filter="url(#clayNoise)"/>
+  </svg>
+</div>
+
+<header class="doc-header">
+  <div class="ver">Locus · Design System · Version B</div>
+  <h1>陶土 <em>Terracotta</em></h1>
+  <p class="sub">戒断不是对抗，是滋养。如陶土在窑中缓慢成型，如手账一页页翻过。赤陶为记，苔绿为时，一切都在纸上温柔地发生。</p>
+  <nav class="doc-nav">
+    <a href="#tokens">色彩与字体</a>
+    <a href="#screens">界面打样</a>
+  </nav>
+</header>
+
+<section class="ds-section" id="tokens">
+  <div class="sec-label">Color Tokens</div>
+  <div class="swatches">
+    <div class="swatch"><div class="sw-color" style="background:#F5F0E8;border:1px solid var(--line)"></div><div class="sw-info"><div class="sw-name">暖米白 Paper</div><div class="sw-hex">#F5F0E8</div></div></div>
+    <div class="swatch"><div class="sw-color" style="background:#FFFFFF;border:1px solid var(--line)"></div><div class="sw-info"><div class="sw-name">纸面 Surface</div><div class="sw-hex">#FFFFFF</div></div></div>
+    <div class="swatch"><div class="sw-color" style="background:#C4703F"></div><div class="sw-info"><div class="sw-name">赤陶 Terracotta</div><div class="sw-hex">#C4703F</div></div></div>
+    <div class="swatch"><div class="sw-color" style="background:#6B7C5E"></div><div class="sw-info"><div class="sw-name">苔绿 Moss</div><div class="sw-hex">#6B7C5E</div></div></div>
+    <div class="swatch"><div class="sw-color" style="background:#3A322A"></div><div class="sw-info"><div class="sw-name">墨棕 Ink Brown</div><div class="sw-hex">#3A322A</div></div></div>
+    <div class="swatch"><div class="sw-color" style="background:#9A8F80"></div><div class="sw-info"><div class="sw-name">灰陶 Stone</div><div class="sw-hex">#9A8F80</div></div></div>
+  </div>
+
+  <div class="sec-label" style="margin-top:48px">Typography</div>
+  <div class="type-scale">
+    <div class="type-row"><span class="t-label">DISPLAY</span><span style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:600">戒断 23 天</span></div>
+    <div class="type-row"><span class="t-label">HEADING</span><span style="font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600">冲动会来，也会走</span></div>
+    <div class="type-row"><span class="t-label">BODY</span><span style="font-size:15px;font-weight:300">今晚的冲动强度比昨天低了 40%，继续保持。</span></div>
+    <div class="type-row"><span class="t-label">MONO</span><span style="font-family:'Space Grotesk',monospace;font-size:14px;letter-spacing:0.1em">23 DAYS · STREAK</span></div>
+  </div>
+</section>
+
+<section class="screens-section" id="screens">
+  <div class="screens-grid">
+
+    <!-- 屏幕一：戒断中心 -->
+    <div class="screen-item">
+      <div class="phone">
+        <div class="phone-screen scr-sober">
+          <div class="clay-bg">
+            <svg viewBox="0 0 390 460" preserveAspectRatio="xMidYMid slice">
+              <defs>
+                <filter id="cNoise" x="0%" y="0%" width="100%" height="100%">
+                  <feTurbulence type="fractalNoise" baseFrequency="0.01 0.02" numOctaves="4" seed="8" result="n"/>
+                  <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.77  0 0 0 0 0.44  0 0 0 0 0.25  0 0 0 0.08 0"/>
+                </filter>
+              </defs>
+              <rect width="390" height="460" filter="url(#cNoise)"/>
+            </svg>
+          </div>
+
+          <div class="status-bar">
+            <span>21:47</span>
+            <div class="icons">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C7 3 3 7 3 12s4 9 9 9 9-4 9-9-4-9-9-9zm0 16c-3.9 0-7-3.1-7-7s3.1-7 7-7 7 3.1 7 7-3.1 7-7 7z"/></svg>
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4zM13 18h-2v-2h2v2zm0-4h-2V9h2v5z"/></svg>
+            </div>
+          </div>
+
+          <div class="sober-header fade-up d1">
+            <span class="greet">晚上好，今天也辛苦了</span>
+            <div class="avatar">K</div>
+          </div>
+
+          <div class="streak-hero fade-up d2">
+            <div class="seal-ring"></div>
+            <div class="streak-num">23<span class="unit">天</span></div>
+            <div class="streak-label">连续守护 · 像陶土一样慢慢成型</div>
+          </div>
+
+          <div class="urge-card fade-up d3">
+            <div class="uc-title">URGE SURFING · 冲动冲浪</div>
+            <div class="uc-value">冲动峰值已过</div>
+            <div class="urge-wave">
+              <svg viewBox="0 0 342 60" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="waveGradB" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#C4703F" stop-opacity="0.2"/>
+                    <stop offset="100%" stop-color="#C4703F" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path class="wave-fill" d="M0,46 C30,46 45,18 75,16 C105,14 120,42 150,45 C180,48 195,26 225,24 C255,22 270,46 300,48 C320,49 342,44 342,44 L342,60 L0,60 Z"/>
+                <path class="wave-path" d="M0,46 C30,46 45,18 75,16 C105,14 120,42 150,45 C180,48 195,26 225,24 C255,22 270,46 300,48 C320,49 342,44 342,44"/>
+              </svg>
+            </div>
+            <div class="uc-hint">今晚 20:30 出现一次中度冲动，持续约 12 分钟，已通过冲浪练习平复。</div>
+          </div>
+
+          <div class="quick-actions fade-up d4">
+            <button class="qa-btn">
+              <div class="qa-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+              <div class="qa-title">打卡守护</div>
+              <div class="qa-sub">记录今夜状态</div>
+            </button>
+            <button class="qa-btn">
+              <div class="qa-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+              <div class="qa-title">冲浪练习</div>
+              <div class="qa-sub">10分钟冥想</div>
+            </button>
+          </div>
+
+          <button class="sos-fab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+            冲动急救
+          </button>
+
+          <div class="bottom-nav">
+            <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>守护</span><span class="nav-dot"></span></div>
+            <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/><path d="M2 12h20"/></svg><span>灵感</span><span class="nav-dot"></span></div>
+            <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>时间</span><span class="nav-dot"></span></div>
+            <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg><span>复盘</span><span class="nav-dot"></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-caption">
+        <div class="cap-title">戒断中心</div>
+        <div class="cap-desc">陶土流体背景 + 衬线大数字，印章式圆环缓慢旋转，手账质感</div>
+      </div>
+    </div>
+
+    <!-- 屏幕二：灵感行动库 -->
+    <div class="screen-item">
+      <div class="phone">
+        <div class="phone-screen scr-inspire">
+          <div class="status-bar">
+            <span>21:52</span>
+            <div class="icons">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C7 3 3 7 3 12s4 9 9 9 9-4 9-9-4-9-9-9zm0 16c-3.9 0-7-3.1-7-7s3.1-7 7-7 7 3.1 7 7-3.1 7-7 7z"/></svg>
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4zM13 18h-2v-2h2v2zm0-4h-2V9h2v5z"/></svg>
+            </div>
+          </div>
+
+          <div class="inspire-header fade-up d1">
+            <h2>现在，做点别的</h2>
+            <div class="ih-sub">根据当下状态，为你推荐三件事</div>
+          </div>
+
+          <div class="filter-chips fade-up d2">
+            <div class="chip active">此刻推荐</div>
+            <div class="chip">5 分钟</div>
+            <div class="chip">30 分钟</div>
+            <div class="chip">出门走走</div>
+            <div class="chip">动手创作</div>
+          </div>
+
+          <div class="activity-cards">
+            <div class="act-card fade-up d2">
+              <div class="ac-clay">
+                <svg viewBox="0 0 110 170" preserveAspectRatio="xMidYMid slice">
+                  <defs><filter id="cm1"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="6"/><feColorMatrix type="matrix" values="0 0 0 0 0.77  0 0 0 0 0.44  0 0 0 0 0.25  0 0 0 0.1 0"/></filter></defs>
+                  <rect width="110" height="170" filter="url(#cm1)"/>
+                </svg>
+              </div>
+              <div class="ac-time"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>5 MIN</div>
+              <div class="ac-title">泡一杯热茶</div>
+              <div class="ac-desc">双手捧杯，感受温度从掌心传到手臂。什么都不想，就看着热气往上飘。五分钟就好。</div>
+              <div class="ac-tag">感官唤醒</div>
+            </div>
+
+            <div class="act-card fade-up d3">
+              <div class="ac-clay">
+                <svg viewBox="0 0 110 170" preserveAspectRatio="xMidYMid slice">
+                  <defs><filter id="cm2"><feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" seed="11"/><feColorMatrix type="matrix" values="0 0 0 0 0.42  0 0 0 0 0.49  0 0 0 0 0.37  0 0 0 0.1 0"/></filter></defs>
+                  <rect width="110" height="170" filter="url(#cm2)"/>
+                </svg>
+              </div>
+              <div class="ac-time"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>15 MIN</div>
+              <div class="ac-title">整理书桌一角</div>
+              <div class="ac-desc">不需要收拾整个房间，就整理你伸手可及的那一块。环境清爽了，心也会跟着清爽一点。</div>
+              <div class="ac-tag">环境整理</div>
+            </div>
+
+            <div class="act-card fade-up d4">
+              <div class="ac-clay">
+                <svg viewBox="0 0 110 170" preserveAspectRatio="xMidYMid slice">
+                  <defs><filter id="cm3"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" seed="17"/><feColorMatrix type="matrix" values="0 0 0 0 0.77  0 0 0 0 0.44  0 0 0 0 0.25  0 0 0 0.1 0"/></filter></defs>
+                  <rect width="110" height="170" filter="url(#cm3)"/>
+                </svg>
+              </div>
+              <div class="ac-time"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>30 MIN</div>
+              <div class="ac-title">写一页手账</div>
+              <div class="ac-desc">不用写得多好，就写今天最强烈的一个感受。写下来的东西，就不会再在心里翻腾了。</div>
+              <div class="ac-tag">表达</div>
+            </div>
+          </div>
+
+          <div class="shuffle-hint fade-up d4">都不想做？摇一摇换一批 →</div>
+
+          <div class="bottom-nav">
+            <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>守护</span><span class="nav-dot"></span></div>
+            <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/><path d="M2 12h20"/></svg><span>灵感</span><span class="nav-dot"></span></div>
+            <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>时间</span><span class="nav-dot"></span></div>
+            <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg><span>复盘</span><span class="nav-dot"></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-caption">
+        <div class="cap-title">灵感行动库</div>
+        <div class="cap-desc">手账式活动卡片，陶土与苔绿双色流体点缀，温暖治愈的内容文案</div>
+      </div>
+    </div>
+
+    <!-- 屏幕三：时间规划 -->
+    <div class="screen-item">
+      <div class="phone">
+        <div class="phone-screen scr-time">
+          <div class="status-bar">
+            <span>22:03</span>
+            <div class="icons">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C7 3 3 7 3 12s4 9 9 9 9-4 9-9-4-9-9-9zm0 16c-3.9 0-7-3.1-7-7s3.1-7 7-7 7 3.1 7 7-3.1 7-7 7z"/></svg>
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4zM13 18h-2v-2h2v2zm0-4h-2V9h2v5z"/></svg>
+            </div>
+          </div>
+
+          <div class="time-header fade-up d1">
+            <h2>今日时间轴</h2>
+            <div class="date">9.29 周一</div>
+          </div>
+
+          <div class="week-strip fade-up d2">
+            <div class="day-pill"><div class="dp-dot">25</div><div class="dp-label">四</div></div>
+            <div class="day-pill"><div class="dp-dot">26</div><div class="dp-label">五</div></div>
+            <div class="day-pill"><div class="dp-dot">27</div><div class="dp-label">六</div></div>
+            <div class="day-pill"><div class="dp-dot">28</div><div class="dp-label">日</div></div>
+            <div class="day-pill active"><div class="dp-dot">29</div><div class="dp-label">一</div></div>
+            <div class="day-pill"><div class="dp-dot">30</div><div class="dp-label">二</div></div>
+            <div class="day-pill"><div class="dp-dot">1</div><div class="dp-label">三</div></div>
+          </div>
+
+          <div class="timeline">
+            <div class="tl-block" style="animation-delay:0.15s">
+              <div class="tl-time">19:00</div>
+              <div class="tl-line"></div>
+              <div class="tl-card">
+                <div class="tl-title">晚餐 · 正常饮食</div>
+                <div class="tl-meta">食堂 · 一荤一素 · 无零食</div>
+              </div>
+            </div>
+            <div class="tl-block" style="animation-delay:0.3s">
+              <div class="tl-time">20:00</div>
+              <div class="tl-line"></div>
+              <div class="tl-card">
+                <div class="tl-title">图书馆自习</div>
+                <div class="tl-meta">高数第四章 · 习题 12 道</div>
+              </div>
+            </div>
+            <div class="tl-block active" style="animation-delay:0.45s">
+              <div class="tl-time">22:00</div>
+              <div class="tl-line"></div>
+              <div class="tl-card">
+                <div class="tl-title">自由时间</div>
+                <div class="tl-meta">原计划刷手机 → 建议替代活动</div>
+                <div class="tl-progress"><div class="tl-progress-bar" style="--w:15%"></div></div>
+              </div>
+            </div>
+            <div class="tl-block" style="animation-delay:0.6s">
+              <div class="tl-time">23:00</div>
+              <div class="tl-line"></div>
+              <div class="tl-card">
+                <div class="tl-title">睡前仪式</div>
+                <div class="tl-meta">洗漱 · 拉伸 · 手机放客厅</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pomo-float fade-up d4">
+            <div class="pf-label">FOCUS · 番茄钟</div>
+            <div class="pf-time">24:59</div>
+            <div class="pf-task">当前任务：高数习题</div>
+            <div class="pf-ring">
+              <svg viewBox="0 0 76 76">
+                <circle class="ring-bg" cx="38" cy="38" r="36"/>
+                <circle class="ring-fg" cx="38" cy="38" r="36"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="add-block-btn fade-up d4">+ 添加时间块</div>
+
+          <div class="bottom-nav">
+            <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>守护</span><span class="nav-dot"></span></div>
+            <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/><path d="M2 12h20"/></svg><span>灵感</span><span class="nav-dot"></span></div>
+            <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>时间</span><span class="nav-dot"></span></div>
+            <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg><span>复盘</span><span class="nav-dot"></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-caption">
+        <div class="cap-title">时间规划</div>
+        <div class="cap-desc">苔绿为主的时间轴与番茄钟，衬线字体计时，柔和纸片式入场动效</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</body>
+</html>
