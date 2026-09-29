@@ -24,6 +24,7 @@ import com.locus.app.designsystem.theme.InkBackground
 import com.locus.app.designsystem.theme.LocusTheme
 import com.locus.app.designsystem.theme.LocusTypography
 import com.locus.app.designsystem.theme.Stone
+import com.locus.app.feature.inspire.InspireScreen
 import com.locus.app.feature.sober.SoberScreen
 
 @Composable
@@ -61,7 +62,7 @@ fun MainNavigation() {
                 modifier = Modifier.padding(innerPadding),
             ) {
                 composable("sober") { SoberScreen() }
-                composable("inspire") { PlaceholderScreen("灵感") }
+                composable("inspire") { InspireScreen() }
                 composable("timelog") { PlaceholderScreen("记录") }
                 composable("review") { PlaceholderScreen("复盘 · 敬请期待") }
             }
