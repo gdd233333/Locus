@@ -1,10 +1,8 @@
 package com.locus.app.feature.timelog
 
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -22,22 +20,21 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.locus.app.R
 import com.locus.app.core.model.FrequentActivity
 import com.locus.app.core.model.TimeLog
+import com.locus.app.designsystem.component.AuroraBackground
+import com.locus.app.designsystem.component.CardShimmer
 import com.locus.app.designsystem.component.WeekDaySelector
+import com.locus.app.designsystem.component.bounceClick
+import com.locus.app.designsystem.component.rememberAuroraPhase
+import com.locus.app.designsystem.component.rememberBreathingAlpha
 import com.locus.app.designsystem.theme.*
 import kotlinx.coroutines.delay
 import java.time.LocalDate
@@ -77,6 +74,8 @@ fun TimeLogScreen(
     val isToday = uiState.selectedDate == LocalDate.now()
 
     Box(modifier = modifier.fillMaxSize().background(InkBackground)) {
+        AuroraBackground(modifier = Modifier.fillMaxSize(), intensity = 0.6f)
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -188,7 +187,7 @@ fun TimeLogScreen(
 private fun dayOfWeekLabel(date: LocalDate): String =
     "周" + listOf("一", "二", "三", "四", "五", "六", "日")[date.dayOfWeek.value - 1]
 
-/** 正在记录大卡片：流动琥珀边框 + 呼吸圆点 + 大计时器 */
+/** 正在记录大卡片：流动虚线边框 + 呼吸圆点 + 发光大计时器 + 卡片流光 */
 @Composable
 private fun RecordingCard(
     log: TimeLog,
@@ -196,18 +195,12 @@ private fun RecordingCard(
     onEndClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // 边框流动：透明度在 0.4 ~ 0.15 间呼吸（4s 周期）
-    val transition = rememberInfiniteTransition(label = "recordingBorder")
-    val borderAlpha by transition.animateFloat(
-        initialValue = 0.4f,
-        targetValue = 0.15f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "borderAlpha",
-    )
+    // 边框虚线流动：相位持续推进，虚线沿边框爬行
+    val borderPhase = rememberAuroraPhase(6000, label = "recordingBorder") * 30f
+    // 边框整体呼吸
+    val borderAlpha = rememberBreathingAlpha(0.25f, 0.55f, 4000, label = "borderBreathe")
     // 圆点脉动：缩放 1f ~ 1.8f（2s 周期）
+    val transition = rememberInfiniteTransition(label = "recordingDot")
     val dotScale by transition.animateFloat(
         initialValue = 1f,
         targetValue = 1.8f,
@@ -217,13 +210,14 @@ private fun RecordingCard(
         ),
         label = "dotScale",
     )
+    // 计时器光晕呼吸
+    val glowAlpha = rememberBreathingAlpha(0.25f, 0.55f, 2600, label = "timerGlow")
     // 入场
     var appeared by remember { mutableStateOf(false) }
     val enterAlpha by animateFloatAsState(if (appeared) 1f else 0f, tween(700, easing = LocusMotion.EaseOut), label = "enterAlpha")
     val enterOffset by animateFloatAsState(if (appeared) 0f else 24f, tween(700, easing = LocusMotion.EaseOut), label = "enterOffset")
     LaunchedEffect(Unit) { appeared = true }
 
-    val borderColor = Amber.copy(alpha = borderAlpha)
     val startTimeText = log.startTime.atZone(ZoneId.systemDefault()).format(timeFormatter)
 
     Box(
@@ -234,29 +228,28 @@ private fun RecordingCard(
             .clip(RoundedCornerShape(LocusRadius.xxl))
             .background(InkSurface)
             .drawBehind {
-                // 对角琥珀渐变的流动边框（1.5dp 描边）
+                // 底层：常亮细边框
                 drawRoundRect(
-                    brush = Brush.linearGradient(
-                        colors = listOf(borderColor, Color.Transparent, Color.Transparent, borderColor),
-                        start = Offset.Zero,
-                        end = Offset(size.width, size.height),
-                    ),
+                    color = Amber.copy(alpha = 0.12f),
                     cornerRadius = CornerRadius(28.dp.toPx()),
-                    style = Stroke(width = 1.5.dp.toPx()),
+                    style = Stroke(width = 1.dp.toPx()),
+                )
+                // 上层：流动虚线高光（相位推进 → 沿边框爬行）
+                drawRoundRect(
+                    color = Amber.copy(alpha = borderAlpha),
+                    cornerRadius = CornerRadius(28.dp.toPx()),
+                    style = Stroke(
+                        width = 1.5.dp.toPx(),
+                        pathEffect = PathEffect.dashPathEffect(
+                            floatArrayOf(28f, 42f),
+                            borderPhase,
+                        ),
+                    ),
                 )
             },
     ) {
-        // 右上大理石纹理
-        Image(
-            painter = painterResource(R.drawable.marble_texture_5),
-            contentDescription = null,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .width(140.dp)
-                .fillMaxHeight()
-                .alpha(0.3f),
-            contentScale = ContentScale.Crop,
-        )
+        // 动态眩光：替代原右上大理石贴图
+        CardShimmer(modifier = Modifier.matchParentSize())
 
         Column(modifier = Modifier.padding(28.dp)) {
             // 状态行：呼吸圆点 + 正在记录
@@ -278,16 +271,23 @@ private fun RecordingCard(
             Spacer(Modifier.height(20.dp))
             Text(
                 text = formatElapsed(elapsedSeconds),
-                style = LocusTypography.displayLarge.copy(fontSize = 64.sp, lineHeight = 64.sp),
+                style = LocusTypography.displayLarge.copy(
+                    fontSize = 64.sp,
+                    lineHeight = 64.sp,
+                    shadow = androidx.compose.ui.graphics.Shadow(
+                        color = Amber.copy(alpha = glowAlpha),
+                        blurRadius = 32f,
+                    ),
+                ),
                 color = Smoke,
             )
             Spacer(Modifier.height(24.dp))
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .bounceClick(onClick = onEndClick)
                     .clip(RoundedCornerShape(LocusRadius.md))
                     .background(Amber)
-                    .clickable(onClick = onEndClick)
                     .padding(vertical = 16.dp),
                 contentAlignment = Alignment.Center,
             ) {
@@ -297,41 +297,53 @@ private fun RecordingCard(
     }
 }
 
-/** 空闲状态卡：虚线边框 + 开始按钮 */
+/** 空闲状态卡：虚线边框 + 呼吸流光 + 开始按钮 */
 @Composable
 private fun IdleCard(
     onStartClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
+    // 虚线缓慢爬行，呼应 RecordingCard 的流动边框
+    val dashPhase = rememberAuroraPhase(10000, label = "idleDash") * 22f
+
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(LocusRadius.xxl))
             .background(InkSurface)
             .drawBehind {
-                // 虚线圆角边框
                 drawRoundRect(
                     color = StoneDark,
                     cornerRadius = CornerRadius(28.dp.toPx()),
                     style = Stroke(
                         width = 1.dp.toPx(),
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 10f)),
+                        pathEffect = PathEffect.dashPathEffect(
+                            floatArrayOf(12f, 10f),
+                            dashPhase,
+                        ),
                     ),
                 )
-            }
-            .padding(horizontal = 28.dp, vertical = 32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+            },
     ) {
-        Text("此刻没有在记录任何事", style = LocusTypography.bodyMedium, color = Stone)
-        Spacer(Modifier.height(20.dp))
-        Box(
+        CardShimmer(modifier = Modifier.matchParentSize(), intensity = 0.5f)
+
+        Column(
             modifier = Modifier
-                .clip(RoundedCornerShape(LocusRadius.full))
-                .border(1.dp, AmberDim, RoundedCornerShape(LocusRadius.full))
-                .clickable(onClick = onStartClick)
-                .padding(horizontal = 32.dp, vertical = 14.dp),
+                .fillMaxWidth()
+                .padding(horizontal = 28.dp, vertical = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("开始记录", style = LocusTypography.bodyMedium, color = Amber)
+            Text("此刻没有在记录任何事", style = LocusTypography.bodyMedium, color = Stone)
+            Spacer(Modifier.height(20.dp))
+            Box(
+                modifier = Modifier
+                    .bounceClick(onClick = onStartClick)
+                    .clip(RoundedCornerShape(LocusRadius.full))
+                    .border(1.dp, AmberDim, RoundedCornerShape(LocusRadius.full))
+                    .padding(horizontal = 32.dp, vertical = 14.dp),
+            ) {
+                Text("开始记录", style = LocusTypography.bodyMedium, color = Amber)
+            }
         }
     }
 }
@@ -387,7 +399,7 @@ private fun TimeLogEntry(log: TimeLog, index: Int) {
         }
         Spacer(Modifier.width(16.dp))
         // 内容卡
-        Row(
+        Box(
             modifier = Modifier
                 .weight(1f)
                 .padding(bottom = 10.dp)
@@ -397,27 +409,38 @@ private fun TimeLogEntry(log: TimeLog, index: Int) {
                     1.dp,
                     if (active) Amber.copy(alpha = 0.2f) else Line,
                     RoundedCornerShape(LocusRadius.md),
-                )
-                .padding(horizontal = 18.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+                ),
         ) {
-            Text(
-                text = log.activityName,
-                style = LocusTypography.bodyMedium,
-                color = if (active) Amber else Smoke,
-            )
-            Box(
+            if (active) {
+                CardShimmer(
+                    modifier = Modifier.matchParentSize(),
+                    intensity = 0.8f,
+                )
+            }
+            Row(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(if (active) AmberDim else InkSurface2)
-                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                    .fillMaxWidth()
+                    .padding(horizontal = 18.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = formatDuration(log.durationSeconds()),
-                    style = LocusTypography.labelMedium,
-                    color = if (active) Amber else Stone,
+                    text = log.activityName,
+                    style = LocusTypography.bodyMedium,
+                    color = if (active) Amber else Smoke,
                 )
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (active) AmberDim else InkSurface2)
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                ) {
+                    Text(
+                        text = formatDuration(log.durationSeconds()),
+                        style = LocusTypography.labelMedium,
+                        color = if (active) Amber else Stone,
+                    )
+                }
             }
         }
     }
@@ -478,7 +501,7 @@ private fun StartLogSheet(
                         .clip(RoundedCornerShape(LocusRadius.full))
                         .background(InkSurface2)
                         .border(1.dp, Line, RoundedCornerShape(LocusRadius.full))
-                        .clickable { name = suggestion.name }
+                        .bounceClick { name = suggestion.name }
                         .padding(horizontal = 14.dp, vertical = 8.dp),
                 ) {
                     Text(suggestion.name, style = LocusTypography.bodySmall, color = Stone)
@@ -496,7 +519,7 @@ private fun StartLogSheet(
                         .clip(RoundedCornerShape(LocusRadius.full))
                         .background(InkSurface2)
                         .border(1.dp, Line, RoundedCornerShape(LocusRadius.full))
-                        .clickable { name = suggestion.name }
+                        .bounceClick { name = suggestion.name }
                         .padding(horizontal = 14.dp, vertical = 8.dp),
                 ) {
                     Text(suggestion.name, style = LocusTypography.bodySmall, color = Stone)
@@ -513,7 +536,7 @@ private fun StartLogSheet(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(LocusRadius.md))
                 .background(if (enabled) Amber else InkSurface2)
-                .clickable(enabled = enabled) { onConfirm(name) }
+                .bounceClick(scaleDown = 0.97f) { if (enabled) onConfirm(name) }
                 .padding(vertical = 16.dp),
             contentAlignment = Alignment.Center,
         ) {

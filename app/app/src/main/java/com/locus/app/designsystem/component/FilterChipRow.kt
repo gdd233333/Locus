@@ -2,7 +2,6 @@ package com.locus.app.designsystem.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -47,7 +46,7 @@ fun FilterChipRow(
                                 .border(1.dp, Line, RoundedCornerShape(LocusRadius.full))
                         }
                     )
-                    .clickable { onChipSelected(chip) }
+                    .bounceClick(scaleDown = 0.92f) { onChipSelected(chip) }
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Text(

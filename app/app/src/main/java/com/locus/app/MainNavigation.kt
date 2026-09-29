@@ -1,5 +1,9 @@
 package com.locus.app
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,6 +25,7 @@ import androidx.navigation.compose.rememberNavController
 import com.locus.app.designsystem.component.LocusBottomNav
 import com.locus.app.designsystem.component.NavItem
 import com.locus.app.designsystem.theme.InkBackground
+import com.locus.app.designsystem.theme.LocusMotion
 import com.locus.app.designsystem.theme.LocusTheme
 import com.locus.app.designsystem.theme.LocusTypography
 import com.locus.app.designsystem.theme.Stone
@@ -61,6 +66,20 @@ fun MainNavigation() {
                 navController = navController,
                 startDestination = "sober",
                 modifier = Modifier.padding(innerPadding),
+                enterTransition = {
+                    fadeIn(tween(350, easing = LocusMotion.EaseOut)) +
+                        slideInVertically(tween(350, easing = LocusMotion.EaseOut)) { it / 14 }
+                },
+                exitTransition = {
+                    fadeOut(tween(250))
+                },
+                popEnterTransition = {
+                    fadeIn(tween(350, easing = LocusMotion.EaseOut)) +
+                        slideInVertically(tween(350, easing = LocusMotion.EaseOut)) { it / 14 }
+                },
+                popExitTransition = {
+                    fadeOut(tween(250))
+                },
             ) {
                 composable("sober") { SoberScreen() }
                 composable("inspire") { InspireScreen() }
