@@ -26,6 +26,7 @@ import com.locus.app.designsystem.theme.LocusTypography
 import com.locus.app.designsystem.theme.Stone
 import com.locus.app.feature.inspire.InspireScreen
 import com.locus.app.feature.sober.SoberScreen
+import com.locus.app.feature.timelog.TimeLogScreen
 
 @Composable
 fun MainNavigation() {
@@ -63,7 +64,7 @@ fun MainNavigation() {
             ) {
                 composable("sober") { SoberScreen() }
                 composable("inspire") { InspireScreen() }
-                composable("timelog") { PlaceholderScreen("记录") }
+                composable("timelog") { TimeLogScreen() }
                 composable("review") { PlaceholderScreen("复盘 · 敬请期待") }
             }
         }
