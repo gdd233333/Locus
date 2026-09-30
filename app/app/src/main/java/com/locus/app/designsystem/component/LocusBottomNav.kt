@@ -54,11 +54,12 @@ fun LocusBottomNav(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(LocusSpacing.bottomNavHeight)
                 .background(InkBackground.copy(alpha = 0.85f))
                 .navigationBarsPadding()
+                // 高度由内容决定（min 56dp）：写死高度会在选中光晕/字体放大时截断内容
+                .heightIn(min = LocusSpacing.bottomNavHeight)
                 .padding(horizontal = 20.dp)
-                .padding(bottom = 8.dp),
+                .padding(vertical = 6.dp),
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -107,7 +108,7 @@ fun LocusBottomNav(
                     Box(contentAlignment = Alignment.Center) {
                         Box(
                             modifier = Modifier
-                                .size(40.dp)
+                                .size(34.dp)
                                 .alpha(glowAlpha)
                                 .clip(CircleShape)
                                 .background(AmberDim)

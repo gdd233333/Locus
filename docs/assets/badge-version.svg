@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="148" height="28" viewBox="0 0 148 28" role="img" aria-label="Release v1.0.1">
+<svg xmlns="http://www.w3.org/2000/svg" width="148" height="28" viewBox="0 0 148 28" role="img" aria-label="Release v1.0.2">
   <rect width="148" height="28" rx="14" fill="#12100F"/>
   <rect x="0.5" y="0.5" width="147" height="27" rx="13.5" fill="none" stroke="#D9A566" stroke-opacity="0.45"/>
   <circle cx="16" cy="14" r="3.5" fill="#D9A566"/>
   <text x="28" y="18" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
         font-size="12" fill="#8A857C">release</text>
   <text x="80" y="18" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
-        font-size="12" font-weight="600" fill="#D9A566">v1.0.1</text>
+        font-size="12" font-weight="600" fill="#D9A566">v1.0.2</text>
 </svg>

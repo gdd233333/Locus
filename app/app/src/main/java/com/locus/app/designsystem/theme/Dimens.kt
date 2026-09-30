@@ -18,7 +18,7 @@ object LocusSpacing {
     val screenHorizontal = 24.dp
     val cardPadding = 24.dp
     val cardSpacing = 16.dp
-    val bottomNavHeight = 64.dp
+    val bottomNavHeight = 56.dp   // 底栏最小高度（内容自适应，此项仅作下限）
     val contentBottomPadding = 110.dp
 }
 
